@@ -1,0 +1,11 @@
+# Entornos y cachés
+.venv/
+venv/
+__pycache__/
+.modelos/
+
+# PDF normativos: la ISO/IEC 27701 tiene derechos de autor y no debe publicarse
+documentos_normativos/
+
+# Reportes generados en cada ejecución
+reportes/

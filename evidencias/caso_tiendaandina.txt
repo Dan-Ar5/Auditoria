@@ -1,0 +1,14 @@
+Empresa: TiendaAndina S.A.C. (caso ficticio del TIF, sección 3.6)
+Alcance: formulario web de suscripción y política de privacidad.
+
+Formulario de suscripción del sitio web:
+- Casilla "Acepto recibir promociones y la política de privacidad", que aparece premarcada por defecto.
+- Campos solicitados: nombre, correo electrónico, teléfono y fecha de nacimiento.
+
+Política de privacidad:
+- Finalidad declarada: "mejorar nuestra experiencia y ofrecerte productos".
+- "Para cualquier consulta sobre tus datos, comunícate por teléfono a la central."
+- No se indican destinatarios de los datos, plazo de conservación ni identidad del responsable del tratamiento.
+
+Registros operativos:
+- No existe registro de la fecha y hora en que el usuario otorgó el consentimiento.
