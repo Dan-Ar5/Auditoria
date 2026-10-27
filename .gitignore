@@ -15,3 +15,6 @@ reportes/
 
 # Repositorio de referencia de otro agente del grupo (tiene su propio git)
 agent-inventory-data-AS/
+
+# Qdrant embebido (modo qdrant sin Docker)
+.qdrant_local/

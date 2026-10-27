@@ -115,9 +115,12 @@ def render_markdown(record: Dict[str, Any]) -> str:
         if domain.get("articles"):
             norms.append("Ley 29733: " + ", ".join(f"Art. {a}" for a in domain["articles"]))
         evidence = " / ".join(f"«{q}»" for q in domain.get("evidencia_citada", [])) or "Sin evidencia aportada"
+        opinion = domain.get("llm_opinion")
+        opinion_text = (f"<br>**Opinión distinta del LLM (para revisión):** {_cell(opinion['dictamen'])}. "
+                        f"{_cell(opinion.get('brecha'))}") if opinion else ""
         lines.append(
             f"| {_cell(domain['domain'])} | {_cell('. '.join(norms))} | {_cell(evidence)} | **{_cell(domain['dictamen'])}** | "
-            f"**Hallazgo:** {_cell(domain['hallazgo'])}<br>**Medida:** {_cell(domain['medida_correctiva'])}<br>"
+            f"**Hallazgo:** {_cell(domain['hallazgo'])}<br>**Medida:** {_cell(domain['medida_correctiva'])}{opinion_text}<br>"
             f"_Fragmentos: {_cell(', '.join(domain.get('fragments', [])))}_ |"
         )
     lines += ["", "## Medidas correctivas priorizadas", ""]

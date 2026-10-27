@@ -103,9 +103,12 @@ líneas `Empresa: ...` y `Alcance: ...`, se usan en el encabezado del informe.
 ## Modo qdrant (RAG híbrido del TIF)
 
 ```bash
-docker run -d --name qdrant -p 6333:6333 -v qdrant_data:/qdrant/storage qdrant/qdrant
 python run_demo.py --modo qdrant
 ```
+
+No necesita Docker: si no hay un servidor Qdrant en `localhost:6333`, usa Qdrant embebido en la
+carpeta `.qdrant_local/`. Con Docker también funciona:
+`docker run -d --name qdrant -p 6333:6333 -v qdrant_data:/qdrant/storage qdrant/qdrant`.
 
 - Embeddings densos multilingües `paraphrase-multilingual-MiniLM-L12-v2` + BM25 en español, fusionados con RRF.
 - Re-ranking con el Cross-Encoder multilingüe `BAAI/bge-reranker-v2-m3-int8` (unos 570 MB). Se desactiva con `set RERANKER=0`.
@@ -152,7 +155,12 @@ ollama pull llama3
 Modelo configurable con `set LLM_MODELO=llama3.1`. Las respuestas del LLM pasan por
 guardas antes de usarse:
 - si cita texto que no está en la evidencia o fragmentos no recuperados, va a revisión humana;
-- si su dictamen contradice al de las reglas, prevalece el más estricto y va a revisión humana.
+- si su dictamen contradice al de las reglas, se mantiene el de las reglas (verificable regla por regla),
+  se adjunta la opinión del LLM al informe y el informe va a revisión humana.
+
+Evaluación con llama3 en esta PC (4 casos de Fail-Fast + 6 dominios): llama3 acertó 8/10 y llama3.1 6/10.
+Los modelos de 8B tienden a dictaminar "No Conforme" en casos que cumplen; por eso el LLM es una segunda
+opinión y no la última palabra.
 
 ## Revisión humana (HITL)
 

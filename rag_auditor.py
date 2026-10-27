@@ -41,7 +41,7 @@ def main() -> None:
         print(f"[!] No se pudo usar Qdrant ({exc}).\n    Se continúa en modo local (BM25, sin Docker).\n")
         agent, info = build_agent(mode="local")
 
-    print(f"[i] Recuperación: {agent.mcp.mode} | índice: {info['index']}")
+    print(f"[i] Recuperación: {agent.mcp.mode} ({info['location']}) | índice: {info['index']}")
     for item in info["ingest"]:
         print(f"    - {item['source']}: {item['fragments']} fragmentos ({item['status']})")
     if info.get("reranker_error"):

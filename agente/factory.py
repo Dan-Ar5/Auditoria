@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -38,6 +39,10 @@ def build_agent(
     """Arma el agente completo y devuelve también un resumen de la ingesta/indexación."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    mode = mode or os.environ.get("RETRIEVER_MODE", "local")
+    if mode == "qdrant":
+        retriever_kwargs.setdefault("cache_dir", str(BASE_DIR / ".modelos"))
+        retriever_kwargs.setdefault("embedded_fallback", str(BASE_DIR / ".qdrant_local"))
     corpus = build_corpus(include_pdfs)
     governance = GovernanceLog(out_dir / "governance_log.json")
     hitl = HITLQueue(out_dir / "pending_reviews.json", governance, out_dir / "informes_finales.json")
@@ -53,4 +58,5 @@ def build_agent(
         "backend": backend.mode, "fragments": len(corpus), "reindexed": True}
     agent = ConsentSupervisorAgent(mcp_backend=backend, hitl_queue=hitl, reasoner=reasoner or OllamaReasoner())
     return agent, {"index": index_info, "ingest": corpus.ingest_report,
+                   "location": getattr(backend.retriever, "location", "memoria (BM25 en Python)"),
                    "reranker_error": getattr(backend.retriever, "reranker_error", None)}

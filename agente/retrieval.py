@@ -84,6 +84,7 @@ class QdrantHybridRetriever:
         sparse_model: str = "Qdrant/bm25",
         reranker_model: Optional[str] = "BAAI/bge-reranker-v2-m3-int8",
         cache_dir: str = ".modelos",
+        embedded_fallback: Optional[str] = ".qdrant_local",
     ) -> None:
         try:
             from fastembed import SparseTextEmbedding, TextEmbedding
@@ -93,8 +94,20 @@ class QdrantHybridRetriever:
 
         self.corpus = corpus
         self.collection = collection
-        self.client = QdrantClient(location=":memory:") if url == ":memory:" else QdrantClient(url=url)
-        self.client.get_collections()  # falla rápido si Qdrant no está levantado
+        self.location = url
+        if url == ":memory:":
+            self.client = QdrantClient(location=":memory:")
+        elif not url.startswith("http"):
+            self.client = QdrantClient(path=url)  # Qdrant embebido en una carpeta (sin Docker)
+        else:
+            self.client = QdrantClient(url=url, check_compatibility=False)
+            try:
+                self.client.get_collections()  # falla rápido si el servidor no está levantado
+            except Exception:  # noqa: BLE001
+                if not embedded_fallback:
+                    raise
+                self.location = f"{embedded_fallback} (embebido; no hay servidor en {url})"
+                self.client = QdrantClient(path=embedded_fallback)
         self.dense = TextEmbedding(model_name=dense_model, cache_dir=cache_dir)
         self.sparse = SparseTextEmbedding(model_name=sparse_model, cache_dir=cache_dir, language="spanish")
         self.dense_model = dense_model

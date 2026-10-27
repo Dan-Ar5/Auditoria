@@ -26,7 +26,7 @@ def main() -> None:
     backend, hitl = agent.mcp, agent.hitl_queue
 
     print(f"[i] Ollama disponible: {agent.reasoner.is_available()} (modelo={agent.reasoner.model})")
-    print(f"[i] Recuperación: {backend.mode} | fragmentos en el corpus: {len(backend.corpus)}")
+    print(f"[i] Recuperación: {backend.mode} ({info['location']}) | fragmentos en el corpus: {len(backend.corpus)}")
     for item in info["ingest"]:
         print(f"    - {item['source']}: {item['fragments']} fragmentos ({item['status']})")
     if info.get("reranker_error"):

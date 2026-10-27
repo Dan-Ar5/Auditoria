@@ -21,16 +21,18 @@ REGLAS OBLIGATORIAS:
 - La ausencia de evidencia de un requisito es una no conformidad, no una conformidad.
 - Responde SIEMPRE en JSON válido, en español, sin texto adicional."""
 
+# El orden importa: el modelo razona (finalidad, justificación) ANTES de decidir.
 EXCEPTION_SCHEMA = {
     "type": "object",
     "properties": {
-        "aplica_excepcion": {"type": "boolean"},
-        "numeral": {"type": "string"},
+        "finalidad_del_tratamiento": {"type": "string"},
         "justificacion": {"type": "string"},
+        "numeral": {"type": "string"},
+        "aplica_excepcion": {"type": "boolean"},
         "fragmentos_citados": {"type": "array", "items": {"type": "string"}},
         "confianza": {"type": "number"},
     },
-    "required": ["aplica_excepcion", "justificacion", "confianza"],
+    "required": ["finalidad_del_tratamiento", "justificacion", "numeral", "aplica_excepcion", "confianza"],
 }
 
 # Los 4 pasos de la Cadena de Pensamiento del TIF (3.3) son campos obligatorios de la salida.
@@ -88,22 +90,41 @@ class OllamaReasoner:
         prompt = (
             "PASO FAIL-FAST. Fragmentos sobre excepciones al consentimiento (Art. 14, Ley N.° 29733):\n\n"
             f"{format_fragments(fragments)}\n\n<evidencia>\n{evidence}\n</evidencia>\n\n"
-            "Determina si el tratamiento descrito encaja en alguna excepción. Una excepción solo ampara el "
-            "tratamiento necesario para su fin: si la evidencia declara también fines comerciales, publicidad "
-            "o perfilamiento, la excepción NO aplica a esos fines."
+            "Determina si el tratamiento descrito encaja en alguna excepción, en este orden:\n"
+            "1. finalidad_del_tratamiento: para qué recopila los datos la organización, según la evidencia.\n"
+            "2. justificacion: compara esa finalidad con cada supuesto de los fragmentos. Lo normal es que NO "
+            "aplique ninguna: la excepción es la salvedad, no la regla. Una excepción solo ampara el tratamiento "
+            "necesario para su fin: si la evidencia declara fines comerciales, publicidad, boletines o "
+            "perfilamiento, la excepción NO aplica.\n"
+            "3. numeral: el numeral del Art. 14 que aplica, o vacío si ninguno.\n"
+            "4. aplica_excepcion: true solo si un supuesto encaja claramente con la finalidad descrita.\n"
+            "confianza: número entre 0 y 1."
         )
         return self._chat(prompt, EXCEPTION_SCHEMA)
 
     def evaluate_domain(self, domain_name: str, evidence: str, fragments: List[Dict[str, Any]],
                         rule_findings: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-        observations = "\n".join(f"- {f['id']} ({f['description']}): {f['status']}" for f in rule_findings)
+        labels = {"cumple": "CUMPLE", "incumple": "NO CUMPLE", "no_evidenciado": "NO CONSTA EN LA EVIDENCIA",
+                  "no_detectado": "NO SE DETECTÓ (correcto)"}
+        observations = "\n".join(
+            f"- {f['description']}: {labels.get(f['status'], f['status'])}"
+            + (f" — evidencia: «{f['quote']}»" if f.get("quote") else "")
+            for f in rule_findings)
         prompt = (
             f"DOMINIO A EVALUAR: {domain_name}\n\nFRAGMENTOS NORMATIVOS RECUPERADOS:\n\n"
             f"{format_fragments(fragments)}\n\n<evidencia>\n{evidence}\n</evidencia>\n\n"
-            f"OBSERVACIONES DEL MOTOR DE REGLAS (apoyo, verifícalas contra la evidencia):\n{observations}\n\n"
-            "Sigue estos 4 pasos y vuelca cada uno en su campo: (1) exigencia normativa según los fragmentos; "
-            "(2) evidencia_citada: citas textuales de la evidencia; (3) brecha entre norma y evidencia; "
-            f"(4) dictamen: uno de {', '.join(DICTAMENES)}. Luego redacta el hallazgo y la medida correctiva."
+            f"HECHOS YA VERIFICADOS CONTRA LA EVIDENCIA (motor de reglas):\n{observations}\n\n"
+            "Instrucciones:\n"
+            "- Parte de los hechos verificados. Solo puedes contradecir uno si copias una frase de la evidencia "
+            "que lo demuestre.\n"
+            "- No exijas requisitos que no aparezcan en los fragmentos normativos recuperados.\n"
+            "- Si todos los hechos son CUMPLE o NO SE DETECTÓ, el dictamen es Conforme; si alguno es NO CUMPLE o "
+            "NO CONSTA EN LA EVIDENCIA, es No Conforme.\n"
+            "Completa los 4 pasos, cada uno en su campo: (1) exigencia: explica con palabras qué exigen los "
+            "fragmentos; (2) evidencia_citada: frases COPIADAS LITERALMENTE de la evidencia, sin agregar palabras; "
+            f"(3) brecha entre norma y evidencia; (4) dictamen: uno de {', '.join(DICTAMENES)}. Luego redacta el "
+            "hallazgo y la medida correctiva. fragmentos_citados: identificadores de los fragmentos usados "
+            "(por ejemplo ISO-A.1.2.5), sin corchetes. confianza: número entre 0 y 1."
         )
         return self._chat(prompt, DOMAIN_SCHEMA)
 

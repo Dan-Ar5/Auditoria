@@ -7,13 +7,16 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from .backends import ConsentMCPBackend
-from .evidence import CUMPLE, INCUMPLE, NO_EVIDENCIADO
+from .evidence import INCUMPLE, NO_EVIDENCIADO, segments
 from .hitl import HITLQueue
 from .models import (AGENT_ID, CONFORME, DICTAMENES, DOMAINS, ESTADO_EMITIDO, ESTADO_PENDIENTE,
                      EXCEPTIONS_DOMAIN, NO_APLICA, NO_CONFORME, NORMA_ISO, NORMA_LEY, NORMA_REGLAMENTO)
 from .reasoner import OllamaReasoner
+from .retrieval import _tokens
 
-MIN_LLM_CONFIDENCE = 0.6
+MIN_LLM_CONFIDENCE = 0.5   # la autoevaluación de modelos pequeños es poco fiable: solo alerta si es muy baja
+QUOTE_OVERLAP = 0.85       # proporción de palabras de la cita que deben estar en la evidencia
+MIN_QUOTE_WORDS = 3        # una "cita" de una o dos palabras no prueba nada
 CONSENT_DOMAINS = ("obtencion", "revocacion")
 
 
@@ -21,6 +24,33 @@ def _normalize(text: str) -> str:
     text = unicodedata.normalize("NFKC", text).lower()
     text = re.sub(r"[«»“”\"'‘’]", "", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def _ground_quote(quote: str, evidence: str) -> Optional[str]:
+    """Devuelve la oración ORIGINAL de la evidencia que respalda una cita del LLM, o None si es inventada.
+
+    Los modelos pequeños parafrasean levemente; se acepta la cita si casi todas sus palabras
+    están en la evidencia, y se reemplaza por el texto literal de la evidencia.
+    """
+    words = set(_tokens(quote))
+    if len(words) < MIN_QUOTE_WORDS:
+        return None
+    if _normalize(quote) in _normalize(evidence):
+        exact = True
+    else:
+        exact = len(words & set(_tokens(evidence))) / len(words) >= QUOTE_OVERLAP
+    if not exact:
+        return None
+    best = max(segments(evidence), key=lambda s: len(words & set(_tokens(s))), default=None)
+    return best
+
+
+def _confidence(value: Any) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return min(max(number / 100 if number > 1 else number, 0.0), 1.0)
 
 
 def _first_sentence(text: str) -> str:
@@ -82,7 +112,8 @@ class ConsentSupervisorAgent:
         if llm is not None:
             llm_applies = bool(llm.get("aplica_excepcion"))
             result.update({"source": "llm", "llm_justification": llm.get("justificacion"),
-                           "llm_confidence": llm.get("confianza")})
+                           "llm_purpose": llm.get("finalidad_del_tratamiento"),
+                           "llm_confidence": _confidence(llm.get("confianza"))})
             if llm_applies != rules["applies"]:
                 hitl_reasons.append("Discrepancia en el paso Fail-Fast entre el LLM "
                                     f"({'aplica' if llm_applies else 'no aplica'}) y las reglas "
@@ -146,13 +177,16 @@ class ConsentSupervisorAgent:
             return result
         result.update({"source": "llm+reglas", "llm_reasoning": {k: llm.get(k) for k in ("exigencia", "brecha")}})
         llm_dictamen = llm.get("dictamen")
-        confidence = float(llm.get("confianza") or 0)
+        confidence = _confidence(llm.get("confianza"))
 
-        # Guardas anti-alucinación: citas textuales y fragmentos realmente recuperados.
-        quotes = [q for q in llm.get("evidencia_citada") or [] if q and _normalize(q) in _normalize(evidence)]
-        invented_quotes = len(llm.get("evidencia_citada") or []) - len(quotes)
+        # Guardas anti-alucinación: citas respaldadas por la evidencia y fragmentos realmente recuperados.
+        raw_quotes = [q for q in llm.get("evidencia_citada") or [] if isinstance(q, str) and q.strip()]
+        grounded = [_ground_quote(q, evidence) for q in raw_quotes]
+        quotes = list(dict.fromkeys(q for q in grounded if q))
+        invented_quotes = grounded.count(None)
         retrieved_ids = {f["id"] for f in fragments}
-        invented_refs = [r for r in llm.get("fragmentos_citados") or [] if r not in retrieved_ids]
+        cited_refs = [str(r).strip(" []()") for r in llm.get("fragmentos_citados") or []]
+        invented_refs = [r for r in cited_refs if r and r not in retrieved_ids]
         if invented_quotes:
             hitl_reasons.append(f"{domain['name']}: el LLM citó {invented_quotes} texto(s) que no aparecen en la evidencia.")
         if invented_refs:
@@ -162,11 +196,12 @@ class ConsentSupervisorAgent:
             hitl_reasons.append(f"{domain['name']}: dictamen del LLM no válido para este dominio ({llm_dictamen}).")
             return result
         if llm_dictamen != rules_dictamen:
-            hitl_reasons.append(f"{domain['name']}: discrepancia entre el LLM ({llm_dictamen}) y las reglas "
-                                f"({rules_dictamen}); prevalece el dictamen más estricto.")
-            result["dictamen"] = NO_CONFORME
-            if rules_dictamen == CONFORME:  # el LLM vio una brecha que las reglas no cubren
-                result.update({"hallazgo": llm.get("hallazgo"), "medida_correctiva": llm.get("medida_correctiva")})
+            # El dictamen provisional es el de las reglas (verificable regla por regla); la opinión del LLM
+            # se adjunta y el informe queda retenido hasta que el auditor decida.
+            hitl_reasons.append(f"{domain['name']}: el LLM opina {llm_dictamen} y las reglas {rules_dictamen}; "
+                                "se mantiene el dictamen de las reglas hasta la revisión del auditor.")
+            result["llm_opinion"] = {"dictamen": llm_dictamen, "brecha": llm.get("brecha"),
+                                     "hallazgo": llm.get("hallazgo"), "evidencia_citada": quotes}
             result["confidence"] = min(result["confidence"], 0.5)
             return result
         if confidence < MIN_LLM_CONFIDENCE:
@@ -177,7 +212,7 @@ class ConsentSupervisorAgent:
             "brecha": llm.get("brecha") or result["brecha"],
             "hallazgo": llm.get("hallazgo") or result["hallazgo"],
             "medida_correctiva": llm.get("medida_correctiva") or result["medida_correctiva"],
-            "confidence": round(min(max(confidence, 0.0), 1.0), 2),
+            "confidence": round(confidence, 2),
         })
         return result
 
