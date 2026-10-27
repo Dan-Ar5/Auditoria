@@ -1,1 +1,4 @@
+Empresa: Banco Andino S.A. (caso ficticio de excepción legal)
+Alcance: formulario de apertura de cuenta de ahorros.
+
 El usuario llenó el formulario de registro para la creación de su cuenta bancaria. No se incluyó casilla de consentimiento explícito.

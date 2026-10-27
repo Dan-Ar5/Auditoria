@@ -1,5 +1,8 @@
+# El núcleo (agente/, modo local) solo usa la librería estándar.
+# Estas dependencias habilitan el modo qdrant, la lectura de PDF, el MCP Server, Excel y las pruebas.
+qdrant-client>=1.12
+fastembed>=0.5
 pypdf>=4.0
-langchain-text-splitters>=0.2
-qdrant-client>=1.10
-fastembed>=0.4
-openai>=1.0
+mcp>=1.2.0
+openpyxl>=3.1.2
+pytest>=8.0.0

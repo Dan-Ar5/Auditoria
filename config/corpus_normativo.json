@@ -1,0 +1,145 @@
+{
+  "nota": "Corpus base del agente con la estructura y metadatos del TIF (sección 3.4). Los textos son RESÚMENES redactados por el equipo (tipo_texto=resumen): la ISO/IEC 27701:2025 está protegida por derechos de autor y no se reproduce. Para citas literales, agregar los PDF oficiales en documentos_normativos/ y usar el modo qdrant. Verificar contra las fuentes oficiales antes de emitir un dictamen definitivo.",
+  "fragments": [
+    {
+      "id": "LEY-ART5",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 5, "numeral": null,
+      "seccion_jerarquica": "Ley N.° 29733 > Título I > Artículo 5 (Principio de consentimiento)",
+      "naturaleza": "requisito_normativo", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 5. Principio de consentimiento. Para tratar datos personales debe mediar el consentimiento de su titular. Es la regla general: todo tratamiento requiere consentimiento salvo las excepciones previstas en el Artículo 14."
+    },
+    {
+      "id": "LEY-ART13-5",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 13, "numeral": "13.5",
+      "seccion_jerarquica": "Ley N.° 29733 > Artículo 13 > numeral 13.5",
+      "naturaleza": "requisito_normativo", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 13, numeral 13.5. Los datos personales solo pueden tratarse con consentimiento de su titular, salvo ley autoritativa. El consentimiento debe ser previo, informado, expreso e inequívoco: una casilla premarcada o una aceptación tácita no lo acreditan."
+    },
+    {
+      "id": "LEY-ART14",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 14, "numeral": null,
+      "seccion_jerarquica": "Ley N.° 29733 > Artículo 14 (Limitaciones al consentimiento)",
+      "naturaleza": "excepcion", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 14. Limitaciones al consentimiento para el tratamiento de datos personales. No se requiere el consentimiento del titular en los casos enumerados por la ley. La excepción exime solo del consentimiento y para el fin que la justifica; no exime del deber de información, de la finalidad ni de la seguridad."
+    },
+    {
+      "id": "LEY-ART14-1",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 14, "numeral": "1",
+      "seccion_jerarquica": "Ley N.° 29733 > Artículo 14 > numeral 1",
+      "naturaleza": "excepcion", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 14 (excepciones al consentimiento), numeral 1: cuando los datos personales se recopilen o transfieran para el ejercicio de las funciones de las entidades públicas en el ámbito de sus competencias."
+    },
+    {
+      "id": "LEY-ART14-2",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 14, "numeral": "2",
+      "seccion_jerarquica": "Ley N.° 29733 > Artículo 14 > numeral 2",
+      "naturaleza": "excepcion", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 14 (excepciones al consentimiento), numeral 2: cuando se trate de datos personales contenidos o destinados a ser contenidos en fuentes accesibles para el público."
+    },
+    {
+      "id": "LEY-ART14-3",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 14, "numeral": "3",
+      "seccion_jerarquica": "Ley N.° 29733 > Artículo 14 > numeral 3",
+      "naturaleza": "excepcion", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 14 (excepciones al consentimiento), numeral 3: cuando se trate de datos personales relativos a la solvencia patrimonial y de crédito, conforme a ley."
+    },
+    {
+      "id": "LEY-ART14-5",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 14, "numeral": "5",
+      "seccion_jerarquica": "Ley N.° 29733 > Artículo 14 > numeral 5",
+      "naturaleza": "excepcion", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 14 (excepciones al consentimiento), numeral 5: cuando los datos personales sean necesarios para la preparación, celebración y ejecución de una relación contractual en la que el titular sea parte. No ampara usos ajenos al contrato, como el envío de publicidad o el perfilamiento comercial."
+    },
+    {
+      "id": "LEY-ART14-6",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 14, "numeral": "6",
+      "seccion_jerarquica": "Ley N.° 29733 > Artículo 14 > numeral 6",
+      "naturaleza": "excepcion", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 14 (excepciones al consentimiento), numeral 6: datos relativos a la salud cuando sea necesario, en circunstancia de riesgo, para la prevención, diagnóstico y tratamiento médico o quirúrgico del titular, por profesionales de la salud y bajo secreto profesional."
+    },
+    {
+      "id": "LEY-ART14-8",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 14, "numeral": "8",
+      "seccion_jerarquica": "Ley N.° 29733 > Artículo 14 > numeral 8",
+      "naturaleza": "excepcion", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 14 (excepciones al consentimiento), numeral 8: cuando se hubiera aplicado un procedimiento de anonimización o disociación."
+    },
+    {
+      "id": "LEY-ART14-LAFT",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 14, "numeral": null,
+      "seccion_jerarquica": "Ley N.° 29733 > Artículo 14 > prevención de lavado de activos",
+      "naturaleza": "excepcion", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 14 (excepciones al consentimiento): tratamiento vinculado al sistema de prevención del lavado de activos y del financiamiento del terrorismo u otros que respondan a un mandato legal (supuesto incorporado por modificatoria; verificar el numeral en el texto consolidado)."
+    },
+    {
+      "id": "LEY-ART18",
+      "norma": "Ley N.° 29733", "tipo_de_documento": "ley nacional", "control": null, "articulo": 18, "numeral": null,
+      "seccion_jerarquica": "Ley N.° 29733 > Título III > Artículo 18 (Derecho de información)",
+      "naturaleza": "requisito_normativo", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Artículo 18. Derecho de información del titular de datos personales. Antes de recopilar los datos, el titular debe ser informado en forma detallada, sencilla, expresa e inequívoca sobre: la finalidad del tratamiento, los destinatarios, la existencia del banco de datos, la identidad y domicilio del titular del banco de datos y del encargado, las transferencias, el plazo de conservación y la forma de ejercer sus derechos."
+    },
+    {
+      "id": "ISO-A.1.2.2",
+      "norma": "ISO/IEC 27701:2025", "tipo_de_documento": "estándar internacional", "control": "A.1.2.2", "articulo": null, "numeral": null,
+      "seccion_jerarquica": "Anexo A > Tabla A.1 > Condiciones para la recopilación y el procesamiento > A.1.2.2",
+      "naturaleza": "requisito_normativo", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Control A.1.2.2 (Identificar y documentar el propósito). La organización debe identificar y documentar los propósitos específicos para los que se procesará la PII. Una finalidad genérica no cumple el control."
+    },
+    {
+      "id": "ISO-A.1.2.4",
+      "norma": "ISO/IEC 27701:2025", "tipo_de_documento": "estándar internacional", "control": "A.1.2.4", "articulo": null, "numeral": null,
+      "seccion_jerarquica": "Anexo A > Tabla A.1 > Condiciones para la recopilación y el procesamiento > A.1.2.4",
+      "naturaleza": "requisito_normativo", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Control A.1.2.4 (Determinar cuándo y cómo obtener el consentimiento). La organización debe determinar y documentar el proceso por el cual se obtiene el consentimiento de los titulares de PII."
+    },
+    {
+      "id": "ISO-B.1.2.4",
+      "norma": "ISO/IEC 27701:2025", "tipo_de_documento": "estándar internacional", "control": "B.1.2.4", "articulo": null, "numeral": null,
+      "seccion_jerarquica": "Anexo B > Guía de implementación > B.1.2.4",
+      "naturaleza": "guia", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Guía B.1.2.4. Se recomienda definir en qué momento del flujo se solicita el consentimiento, con qué texto y por qué canal, y documentar ese proceso para poder demostrarlo."
+    },
+    {
+      "id": "ISO-A.1.2.5",
+      "norma": "ISO/IEC 27701:2025", "tipo_de_documento": "estándar internacional", "control": "A.1.2.5", "articulo": null, "numeral": null,
+      "seccion_jerarquica": "Anexo A > Tabla A.1 > Condiciones para la recopilación y el procesamiento > A.1.2.5",
+      "naturaleza": "requisito_normativo", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Control A.1.2.5 (Obtener y registrar el consentimiento). La organización debe obtener y registrar el consentimiento de los titulares de PII según los procesos documentados."
+    },
+    {
+      "id": "ISO-B.1.2.5",
+      "norma": "ISO/IEC 27701:2025", "tipo_de_documento": "estándar internacional", "control": "B.1.2.5", "articulo": null, "numeral": null,
+      "seccion_jerarquica": "Anexo B > Guía de implementación > B.1.2.5",
+      "naturaleza": "guia", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Guía B.1.2.5. El consentimiento debe ser libre, específico, informado, inequívoco y explícito. Se recomienda registrar el momento en que se otorgó, la identidad del titular y la declaración aceptada, de modo que pueda demostrarse. Las casillas premarcadas y las aceptaciones agrupadas no demuestran un consentimiento válido."
+    },
+    {
+      "id": "ISO-A.1.3.3",
+      "norma": "ISO/IEC 27701:2025", "tipo_de_documento": "estándar internacional", "control": "A.1.3.3", "articulo": null, "numeral": null,
+      "seccion_jerarquica": "Anexo A > Tabla A.1 > Obligaciones con los titulares de PII > A.1.3.3",
+      "naturaleza": "requisito_normativo", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Control A.1.3.3 (Determinar la información para los titulares de PII). La organización debe determinar y documentar la información que entregará a los titulares sobre el procesamiento: finalidad, responsable, destinatarios, plazo de conservación y derechos."
+    },
+    {
+      "id": "ISO-A.1.3.4",
+      "norma": "ISO/IEC 27701:2025", "tipo_de_documento": "estándar internacional", "control": "A.1.3.4", "articulo": null, "numeral": null,
+      "seccion_jerarquica": "Anexo A > Tabla A.1 > Obligaciones con los titulares de PII > A.1.3.4",
+      "naturaleza": "requisito_normativo", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Control A.1.3.4 (Proporcionar información a los titulares de PII). La organización debe proporcionar a los titulares información clara y fácilmente accesible que identifique al responsable y describa el procesamiento de su PII."
+    },
+    {
+      "id": "ISO-A.1.3.5",
+      "norma": "ISO/IEC 27701:2025", "tipo_de_documento": "estándar internacional", "control": "A.1.3.5", "articulo": null, "numeral": null,
+      "seccion_jerarquica": "Anexo A > Tabla A.1 > Obligaciones con los titulares de PII > A.1.3.5",
+      "naturaleza": "requisito_normativo", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Control A.1.3.5 (Proporcionar un mecanismo para modificar o retirar el consentimiento). La organización debe ofrecer a los titulares un mecanismo para modificar o retirar su consentimiento."
+    },
+    {
+      "id": "ISO-B.1.3.5",
+      "norma": "ISO/IEC 27701:2025", "tipo_de_documento": "estándar internacional", "control": "B.1.3.5", "articulo": null, "numeral": null,
+      "seccion_jerarquica": "Anexo B > Guía de implementación > B.1.3.5",
+      "naturaleza": "guia", "idioma": "es", "tipo_texto": "resumen", "origen": "corpus_normativo.json", "pagina": null,
+      "texto": "Guía B.1.3.5. El mecanismo de retiro debe ser tan sencillo como el de obtención y coherente con su canal: si el consentimiento se recogió por web, ofrecer solo un canal telefónico no es equivalente. Se recomienda registrar las solicitudes de retiro y atenderlas en un plazo definido."
+    }
+  ]
+}

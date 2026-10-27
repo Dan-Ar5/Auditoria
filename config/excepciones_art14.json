@@ -1,0 +1,48 @@
+{
+  "nota": "Catálogo para el paso Fail-Fast. Descripciones resumidas del Art. 14 de la Ley N.° 29733; verificar numerales y redacción contra el texto consolidado oficial vigente antes de usar el dictamen.",
+  "exceptions": [
+    {
+      "id": "EXC-ENT-PUBLICA",
+      "numeral": "1",
+      "description": "Datos recopilados o transferidos para el ejercicio de las funciones de entidades públicas en el ámbito de sus competencias.",
+      "patterns": ["entidad(es)? p[uú]blica", "funciones p[uú]blicas", "ejercicio de (sus )?competencias"]
+    },
+    {
+      "id": "EXC-FUENTE-PUBLICA",
+      "numeral": "2",
+      "description": "Datos contenidos o destinados a estar en fuentes accesibles al público.",
+      "patterns": ["fuentes? accesibles? (al|para el) p[uú]blico"]
+    },
+    {
+      "id": "EXC-SOLVENCIA",
+      "numeral": "3",
+      "description": "Datos relativos a la solvencia patrimonial y de crédito, conforme a ley.",
+      "patterns": ["solvencia patrimonial", "centrales? de riesgo", "historial crediticio"]
+    },
+    {
+      "id": "EXC-CONTRACTUAL",
+      "numeral": "5",
+      "description": "Datos necesarios para la preparación, celebración y ejecución de una relación contractual en la que el titular es parte.",
+      "patterns": ["relaci[oó]n contractual", "ejecuci[oó]n (de|del) (un |el )?contrato", "celebraci[oó]n (de|del) (un |el )?contrato", "apertura de (una |su )?cuenta", "creaci[oó]n de (una |su |la )?cuenta"]
+    },
+    {
+      "id": "EXC-SALUD",
+      "numeral": "6",
+      "description": "Datos de salud necesarios, en circunstancia de riesgo, para la prevención, diagnóstico y tratamiento médico del titular.",
+      "patterns": ["emergencia m[eé]dica", "tratamiento m[eé]dico", "diagn[oó]stico"]
+    },
+    {
+      "id": "EXC-ANONIMIZACION",
+      "numeral": "8",
+      "description": "Datos sometidos a un procedimiento de anonimización o disociación.",
+      "patterns": ["anonimizad", "anonimizaci[oó]n", "disociad", "disociaci[oó]n"]
+    },
+    {
+      "id": "EXC-LAVADO-ACTIVOS",
+      "numeral": null,
+      "description": "Tratamiento vinculado a la prevención del lavado de activos y del financiamiento del terrorismo (incorporada por modificatoria; verificar numeral en el texto consolidado).",
+      "patterns": ["lavado de activos", "financiamiento del terrorismo", "conoce a tu cliente", "\\bKYC\\b"]
+    }
+  ],
+  "not_covered_patterns": ["promoci[oó]n(es)?", "publicidad", "marketing", "perfilamiento", "bolet[ií]n", "ofrecerte productos", "fines comerciales"]
+}

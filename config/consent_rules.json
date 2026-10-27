@@ -1,0 +1,171 @@
+{
+  "nota": "Reglas deterministas sobre la evidencia. type=requerido: el elemento debe constar de forma afirmativa; type=prohibido: su presencia es un incumplimiento. Las menciones precedidas por una negación ('No se indican...', 'sin...') se tratan como ausencia. Los patrones son expresiones regulares (sin distinguir mayúsculas).",
+  "rules": [
+    {
+      "id": "INF-01",
+      "domain": "informacion",
+      "type": "requerido",
+      "description": "Se declara una finalidad del tratamiento",
+      "patterns": ["finalidad", "prop[oó]sito del tratamiento", "los datos se usar[aá]n para"],
+      "controls": ["A.1.2.2"],
+      "articles": [18],
+      "finding": "No se declara la finalidad del tratamiento.",
+      "corrective_action": "Declarar por escrito cada finalidad concreta del tratamiento.",
+      "priority": 4
+    },
+    {
+      "id": "INF-02",
+      "domain": "informacion",
+      "type": "prohibido",
+      "description": "Finalidad genérica o indeterminada",
+      "patterns": ["mejorar (nuestra|tu|su) experiencia", "ofrecerte productos", "fines comerciales", "otros fines", "cualquier (otra )?finalidad", "fines diversos"],
+      "controls": ["A.1.2.2"],
+      "articles": [18],
+      "finding": "La finalidad es genérica y no permite un consentimiento específico.",
+      "corrective_action": "Definir finalidades concretas y separadas (por ejemplo: promociones, analítica).",
+      "priority": 4
+    },
+    {
+      "id": "INF-03",
+      "domain": "informacion",
+      "type": "requerido",
+      "description": "Se informan los destinatarios de los datos",
+      "patterns": ["destinatari", "se comparten con", "encargado del tratamiento"],
+      "controls": ["A.1.3.3", "A.1.3.4"],
+      "articles": [18],
+      "finding": "No se informan los destinatarios de los datos.",
+      "corrective_action": "Publicar en el aviso de privacidad los destinatarios o categorías de destinatarios.",
+      "priority": 4
+    },
+    {
+      "id": "INF-04",
+      "domain": "informacion",
+      "type": "requerido",
+      "description": "Se informa el plazo de conservación",
+      "patterns": ["plazo de conservaci[oó]n", "tiempo de conservaci[oó]n", "se conservan"],
+      "controls": ["A.1.3.3"],
+      "articles": [18],
+      "finding": "No se informa el plazo de conservación de los datos.",
+      "corrective_action": "Indicar el plazo de conservación o el criterio para determinarlo.",
+      "priority": 4
+    },
+    {
+      "id": "INF-05",
+      "domain": "informacion",
+      "type": "requerido",
+      "description": "Se identifica al responsable del tratamiento",
+      "patterns": ["responsable del tratamiento", "identidad del responsable", "titular del banco de datos"],
+      "controls": ["A.1.3.3"],
+      "articles": [18],
+      "finding": "No se identifica al responsable del tratamiento.",
+      "corrective_action": "Identificar al responsable (razón social, RUC y domicilio) en el aviso de privacidad.",
+      "priority": 4
+    },
+    {
+      "id": "INF-06",
+      "domain": "informacion",
+      "type": "requerido",
+      "description": "Se informa el canal para ejercer los derechos del titular",
+      "patterns": ["ejercer (sus|tus) derechos", "derechos (de|ARCO)", "acceso, rectificaci[oó]n"],
+      "controls": ["A.1.3.4"],
+      "articles": [18],
+      "finding": "No se informa cómo ejercer los derechos de acceso, rectificación, cancelación y oposición.",
+      "corrective_action": "Publicar un canal claro y accesible para el ejercicio de derechos.",
+      "priority": 4
+    },
+    {
+      "id": "OBT-01",
+      "domain": "obtencion",
+      "type": "requerido",
+      "description": "Existe un mecanismo de consentimiento expreso",
+      "patterns": ["casilla", "checkbox", "consentimiento (expreso|expl[ií]cito)", "\\bacepto\\b", "firma"],
+      "controls": ["A.1.2.4", "A.1.2.5"],
+      "articles": [5],
+      "finding": "No existe un mecanismo para obtener el consentimiento expreso del titular.",
+      "corrective_action": "Incorporar una casilla de consentimiento expreso, desmarcada por defecto.",
+      "priority": 1
+    },
+    {
+      "id": "OBT-02",
+      "domain": "obtencion",
+      "type": "prohibido",
+      "description": "Consentimiento premarcado o tácito",
+      "patterns": ["premarcad", "pre-marcad", "\\bmarcad[ao] por defecto", "preseleccionad", "aceptaci[oó]n t[aá]cita", "al (continuar|navegar|usar)[^.\\n]*aceptas"],
+      "controls": ["A.1.2.5"],
+      "articles": [5],
+      "finding": "La casilla premarcada no demuestra un consentimiento inequívoco.",
+      "corrective_action": "Dejar la casilla desmarcada por defecto: el titular debe marcarla activamente.",
+      "priority": 1
+    },
+    {
+      "id": "OBT-03",
+      "domain": "obtencion",
+      "type": "prohibido",
+      "description": "Consentimiento agrupado con otras aceptaciones",
+      "patterns": ["acepto[^.\\n]*\\b(y|e)\\b[^.\\n]*(pol[ií]tica|t[eé]rminos|condiciones)", "acepto[^.\\n]*(pol[ií]tica|t[eé]rminos|condiciones)[^.\\n]*\\b(y|e)\\b"],
+      "controls": ["A.1.2.5"],
+      "articles": [5],
+      "finding": "El consentimiento se agrupa con la aceptación de la política o los términos: no es específico.",
+      "corrective_action": "Separar el consentimiento por finalidad, independiente de la aceptación de términos.",
+      "priority": 1
+    },
+    {
+      "id": "OBT-04",
+      "domain": "obtencion",
+      "type": "requerido",
+      "description": "Se registra el consentimiento (fecha, hora, titular)",
+      "patterns": ["fecha y hora", "marca de tiempo", "timestamp", "registro del consentimiento", "consentimiento se registra"],
+      "controls": ["A.1.2.5"],
+      "articles": [5],
+      "finding": "No hay registro que permita demostrar el consentimiento.",
+      "corrective_action": "Registrar cada consentimiento con marca de tiempo, identificador del titular y versión del texto aceptado.",
+      "priority": 2
+    },
+    {
+      "id": "REV-01",
+      "domain": "revocacion",
+      "type": "requerido",
+      "description": "Existe un mecanismo para retirar o modificar el consentimiento",
+      "patterns": ["revoca", "retirar el consentimiento", "retiro del consentimiento", "dar(se)? de baja", "panel de preferencias", "cancelar (la )?suscripci", "desuscrib"],
+      "controls": ["A.1.3.5"],
+      "articles": [5],
+      "finding": "No se ofrece un mecanismo para retirar o modificar el consentimiento.",
+      "corrective_action": "Habilitar la revocación en línea (enlace de baja y panel de preferencias).",
+      "priority": 3
+    },
+    {
+      "id": "REV-02",
+      "domain": "revocacion",
+      "type": "prohibido",
+      "description": "Canal de retiro no equivalente al canal de obtención",
+      "applies_if": ["\\bweb\\b", "sitio", "en l[ií]nea", "online", "\\bapp\\b"],
+      "patterns": ["(solo|[uú]nicamente)[^.\\n]*(tel[eé]fono|presencial|oficina|carta)", "por tel[eé]fono a la central", "acudir (presencialmente|a (la|nuestra) oficina)"],
+      "controls": ["A.1.3.5"],
+      "articles": [5],
+      "finding": "El mecanismo de retiro no equivale al canal de obtención (web).",
+      "corrective_action": "Permitir el retiro por el mismo canal en que se obtuvo el consentimiento.",
+      "priority": 3
+    },
+    {
+      "id": "REV-03",
+      "domain": "revocacion",
+      "type": "requerido",
+      "description": "Se define un plazo de respuesta a las solicitudes",
+      "patterns": ["se atiende[n]?", "plazo (m[aá]ximo )?de (respuesta|atenci[oó]n)", "responde[rn]? en"],
+      "controls": ["A.1.3.5"],
+      "articles": [5],
+      "finding": "No se define un plazo de respuesta para las solicitudes de retiro.",
+      "corrective_action": "Definir y publicar un tiempo máximo de respuesta; registrar cada solicitud.",
+      "priority": 3
+    }
+  ],
+  "injection_patterns": [
+    "ignora[r]? (todas )?(las )?(instrucciones|reglas)",
+    "ignore (all )?(previous|prior|the above) instructions",
+    "olvida (tus|las) (reglas|instrucciones)",
+    "dictamina[r]? (que )?(todo )?(es )?conforme",
+    "marca(r)? (todo )?como conforme",
+    "you are now",
+    "system prompt"
+  ]
+}

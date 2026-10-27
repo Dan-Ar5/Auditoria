@@ -2,10 +2,16 @@
 .venv/
 venv/
 __pycache__/
+*.py[cod]
+.pytest_cache/
 .modelos/
 
 # PDF normativos: la ISO/IEC 27701 tiene derechos de autor y no debe publicarse
 documentos_normativos/
 
-# Reportes generados en cada ejecución
+# Entregables generados en cada ejecución
+out/
 reportes/
+
+# Repositorio de referencia de otro agente del grupo (tiene su propio git)
+agent-inventory-data-AS/

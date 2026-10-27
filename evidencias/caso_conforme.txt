@@ -1,0 +1,20 @@
+Empresa: LibreríaSur E.I.R.L. (caso ficticio de control)
+Alcance: formulario web de registro al boletín y política de privacidad.
+
+Formulario de registro del sitio web:
+- Casilla "Deseo recibir el boletín de novedades por correo", desmarcada por defecto; el envío solo se activa si el usuario la marca.
+- Casilla separada "He leído la política de privacidad", también desmarcada por defecto.
+
+Política de privacidad:
+- Responsable del tratamiento: LibreríaSur E.I.R.L., RUC 20123456789, Av. Ejército 123, Arequipa.
+- Finalidad específica: enviar el boletín mensual de novedades de la librería al correo registrado.
+- Destinatarios: el proveedor de envío de correos MailPeru S.A.C., que actúa como encargado del tratamiento.
+- Plazo de conservación: los datos se conservan mientras la suscripción esté activa y se eliminan a los 30 días de la baja.
+- Derechos: el titular puede ejercer sus derechos de acceso, rectificación, cancelación y oposición escribiendo a privacidad@libreriasur.pe.
+
+Registros operativos:
+- Cada consentimiento se registra con fecha y hora, identificador del titular y versión del texto aceptado.
+
+Revocación:
+- Cada boletín incluye un enlace "Darse de baja" y el sitio web ofrece un panel de preferencias para retirar el consentimiento en línea.
+- Las solicitudes se atienden en un plazo máximo de 48 horas.
