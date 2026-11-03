@@ -123,7 +123,37 @@ def test_llm_cannot_downgrade_a_violation(make_agent):
     record = make_agent(reasoner).audit_evidence(read_case("caso_tiendaandina.txt"), "caso_tiendaandina.txt")
     assert verdicts(record)["2"] == "No Conforme"
     reason = record["hitl_trigger"]["reason"]
-    assert "el LLM opina Conforme" in reason and "no aparecen en la evidencia" in reason and "ISO-INVENTADO" in reason
+    assert "el LLM opina Conforme" in reason and "ninguna cita del LLM" in reason and "ISO-INVENTADO" in reason
+
+
+def test_paraphrased_quotes_are_discarded_without_flooding_review(make_agent):
+    literal = "No existe registro de la fecha y hora en que el usuario otorgó el consentimiento."
+    paraphrase = "La empresa no guarda cuándo el usuario aceptó."
+
+    def answer(domain_name, fragments):
+        return {"exigencia": "x", "brecha": "Brecha del LLM", "dictamen": "No Conforme",
+                "evidencia_citada": [literal, paraphrase], "hallazgo": "Hallazgo del LLM",
+                "medida_correctiva": "Medida del LLM", "fragmentos_citados": [fragments[0]["id"]], "confianza": 0.9}
+
+    reasoner = FakeReasoner(exception={"aplica_excepcion": False, "justificacion": "Sin excepción.", "confianza": 0.9},
+                            domain=answer)
+    record = make_agent(reasoner).audit_evidence(read_case("caso_tiendaandina.txt"), "caso_tiendaandina.txt")
+    domain = record["domains"][1]
+    assert paraphrase in domain["llm_discarded_quotes"]
+    assert paraphrase not in domain["evidencia_citada"] and literal in domain["evidencia_citada"]
+    assert "ninguna cita del LLM" not in record["hitl_trigger"]["reason"]
+
+
+def test_llm_narrative_is_dropped_when_no_quote_is_literal(make_agent):
+    reasoner = FakeReasoner(
+        exception={"aplica_excepcion": False, "justificacion": "Sin excepción.", "confianza": 0.9},
+        domain={"exigencia": "x", "evidencia_citada": ["Algo que la empresa nunca escribió en su formulario."],
+                "brecha": "x", "dictamen": "No Conforme", "hallazgo": "Narrativa sin respaldo",
+                "medida_correctiva": "x", "confianza": 0.9},
+    )
+    record = make_agent(reasoner).audit_evidence(read_case("caso_tiendaandina.txt"), "caso_tiendaandina.txt")
+    assert all(d["hallazgo"] != "Narrativa sin respaldo" for d in record["domains"])
+    assert "ninguna cita del LLM" in record["hitl_trigger"]["reason"]
 
 
 def test_llm_disagreement_on_compliant_case_goes_to_auditor(make_agent):
@@ -150,15 +180,19 @@ def test_llm_agreement_uses_llm_narrative(make_agent):
     record = make_agent(reasoner).audit_evidence(read_case("caso_tiendaandina.txt"), "caso_tiendaandina.txt")
     domain = record["domains"][1]
     assert domain["source"] == "llm+reglas" and domain["hallazgo"] == "Hallazgo del LLM"
-    assert record["review_status"] == "EMITIDO"
+    assert record["review_status"] == "PENDIENTE_REVISION_AUDITOR"
+    assert "faltan datos o evidencias suficientes" in record["hitl_trigger"]["reason"]
 
 
-def test_paraphrased_quote_is_grounded_to_literal_text():
+def test_only_literal_quotes_are_grounded():
     from agente.agent import _confidence, _ground_quote
 
     evidence = read_case("caso_conforme.txt")
-    literal = _ground_quote("El sitio web ofrece un panel de preferencias para retirar el consentimiento en línea "
-                            "y cada boletín incluye un enlace 'Darse de baja'.", evidence)
+    paraphrase = "El sitio web ofrece un panel de preferencias para retirar el consentimiento en línea " \
+                 "y cada boletín incluye un enlace 'Darse de baja'."
+    assert _ground_quote(paraphrase, evidence) is None
+    literal = _ground_quote('Cada boletín incluye un enlace "Darse de baja" y el sitio web ofrece un panel '
+                            'de preferencias para retirar el consentimiento en línea.', evidence)
     assert literal and literal.startswith("Cada boletín incluye un enlace")
     assert _ground_quote("No hay opción de no suscribirse al servicio de mensajería", evidence) is None
     assert _confidence(100) == 1.0 and _confidence("0.8") == 0.8 and _confidence(None) == 0.0
@@ -213,7 +247,7 @@ def test_mcp_tools_respond(make_agent):
     assert backend.mcp_tool_retrieve_norms("revocar consentimiento", filters={"control": ["A.1.3.5"]}).ok
     assert backend.mcp_tool_check_exceptions("lavado de activos").data["applies"] is True
     assert backend.mcp_tool_analyze_evidence("Casilla premarcada").ok
-    assert backend.mcp_tool_emit_audit_report({"audit_id": "X"}).ok
+    assert not backend.mcp_tool_emit_audit_report({"audit_id": "X"}).ok
 
 
 def test_create_server_registers_tools():

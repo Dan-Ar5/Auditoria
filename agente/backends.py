@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import os
+from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
 from .corpus import NormativeCorpus
 from .evidence import EvidenceAnalyzer, ExceptionCatalog
 from .hitl import GovernanceLog
-from .models import MCPResponse
+from .models import ESTADO_EMITIDO, MCPResponse
 from .retrieval import build_retriever
 
 EXCEPTION_FILTER = {"articulo": 14, "naturaleza": "excepcion"}
@@ -31,6 +32,7 @@ class ConsentMCPBackend:
         self.mode = mode
         self.retriever = build_retriever(mode, corpus, **retriever_kwargs)
         self.call_log: List[MCPResponse] = []
+        self._emittable_reports: Dict[str, Dict[str, Any]] = {}
 
     def index(self, rebuild: bool = False) -> Dict[str, Any]:
         return self.retriever.index(rebuild=rebuild)
@@ -65,10 +67,23 @@ class ConsentMCPBackend:
         }))
 
     def mcp_tool_emit_audit_report(self, audit_record: Dict[str, Any]) -> MCPResponse:
-        """Envía el informe de auditoría emitido a la Capa de Gobernanza."""
-        self.governance_log.append(audit_record)
+        """Emite únicamente un informe íntegro generado y habilitado por el flujo del agente."""
+        audit_id = audit_record.get("audit_id")
+        staged = self._emittable_reports.get(audit_id) if isinstance(audit_id, str) else None
+        if (staged is None or staged != audit_record or audit_record.get("review_status") != ESTADO_EMITIDO
+                or audit_record.get("hitl_trigger", {}).get("requires_auditor_signoff") is not False):
+            return self._logged(MCPResponse("mcp_tool_emit_audit_report", False, {"stored": False},
+                                           "El informe no está habilitado para emisión; complete el flujo de auditoría y revisión."))
+        self.governance_log.append(deepcopy(staged))
+        del self._emittable_reports[audit_id]
         return self._logged(MCPResponse("mcp_tool_emit_audit_report", True,
                                         {"stored": True, "log_size": len(self.governance_log.entries)}))
+
+    def _stage_generated_report(self, record: Dict[str, Any]) -> None:
+        """Registro interno, no expuesto como herramienta MCP."""
+        if (record.get("review_status") == ESTADO_EMITIDO
+                and record.get("hitl_trigger", {}).get("requires_auditor_signoff") is False):
+            self._emittable_reports[record["audit_id"]] = deepcopy(record)
 
     def _logged(self, response: MCPResponse) -> MCPResponse:
         self.call_log.append(response)

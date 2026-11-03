@@ -1,5 +1,5 @@
 {
-  "nota": "Reglas deterministas sobre la evidencia. type=requerido: el elemento debe constar de forma afirmativa; type=prohibido: su presencia es un incumplimiento. Las menciones precedidas por una negación ('No se indican...', 'sin...') se tratan como ausencia. Los patrones son expresiones regulares (sin distinguir mayúsculas).",
+  "nota": "Reglas deterministas sobre la evidencia. type=requerido: el elemento debe constar de forma afirmativa; type=prohibido: su presencia es un incumplimiento. Las menciones precedidas por una negación ('No se indican...', 'sin...') se tratan como ausencia. Los patrones son expresiones regulares (sin distinguir mayúsculas). evidence_patterns exige contenido adicional en la misma afirmación; todos sus patrones deben cumplirse. Las etiquetas vacías o pendientes no acreditan cumplimiento. La cobertura es parcial y las redacciones no reconocidas requieren revisión humana.",
   "rules": [
     {
       "id": "INF-01",
@@ -11,7 +11,8 @@
       "articles": [18],
       "finding": "No se declara la finalidad del tratamiento.",
       "corrective_action": "Declarar por escrito cada finalidad concreta del tratamiento.",
-      "priority": 4
+      "priority": 4,
+      "evidence_patterns": ["(?:finalidad(?:\\s+espec[ií]fica|\\s+declarada)?\\s*:\\s*|prop[oó]sito del tratamiento\\s*:\\s*|los datos se usar[aá]n para\\s+)\\S.{12,}"]
     },
     {
       "id": "INF-02",
@@ -35,7 +36,8 @@
       "articles": [18],
       "finding": "No se informan los destinatarios de los datos.",
       "corrective_action": "Publicar en el aviso de privacidad los destinatarios o categorías de destinatarios.",
-      "priority": 4
+      "priority": 4,
+      "evidence_patterns": ["(?:destinatari[oa]s?\\s*:\\s*|se comparten con\\s+|encargado del tratamiento\\s*:\\s*)\\S.{10,}"]
     },
     {
       "id": "INF-04",
@@ -47,7 +49,8 @@
       "articles": [18],
       "finding": "No se informa el plazo de conservación de los datos.",
       "corrective_action": "Indicar el plazo de conservación o el criterio para determinarlo.",
-      "priority": 4
+      "priority": 4,
+      "evidence_patterns": ["(?:\\d+\\s*(?:d[ií]as?|mes(?:es)?|a[nñ]os?|horas?)|\\bmientras\\b|\\bhasta\\b|durante\\s+(?:la\\s+)?vigencia)"]
     },
     {
       "id": "INF-05",
@@ -59,7 +62,8 @@
       "articles": [18],
       "finding": "No se identifica al responsable del tratamiento.",
       "corrective_action": "Identificar al responsable (razón social, RUC y domicilio) en el aviso de privacidad.",
-      "priority": 4
+      "priority": 4,
+      "evidence_patterns": ["(?:responsable del tratamiento|identidad del responsable|titular del banco de datos)\\s*:\\s*[^\\W\\d_][\\w .,&-]{5,}"]
     },
     {
       "id": "INF-06",
@@ -71,7 +75,8 @@
       "articles": [18],
       "finding": "No se informa cómo ejercer los derechos de acceso, rectificación, cancelación y oposición.",
       "corrective_action": "Publicar un canal claro y accesible para el ejercicio de derechos.",
-      "priority": 4
+      "priority": 4,
+      "evidence_patterns": ["(?:[\\w.+-]+@[\\w.-]+\\.[a-z]{2,}|https?://\\S+|(?:portal|formulario|oficina|domicilio)\\s+\\S.{8,})"]
     },
     {
       "id": "OBT-01",
@@ -83,7 +88,8 @@
       "articles": [5],
       "finding": "No existe un mecanismo para obtener el consentimiento expreso del titular.",
       "corrective_action": "Incorporar una casilla de consentimiento expreso, desmarcada por defecto.",
-      "priority": 1
+      "priority": 1,
+      "evidence_patterns": ["(?:(?:casilla|checkbox).*(?:[\"«][^\"»]{5,}[\"»]|marc|activar|seleccion)|firma\\s+(?:manuscrita|digital|electr[oó]nica)|consentimiento (?:expreso|expl[ií]cito).*(?:firma|marca|clic|acept))"]
     },
     {
       "id": "OBT-02",
@@ -119,7 +125,8 @@
       "articles": [5],
       "finding": "No hay registro que permita demostrar el consentimiento.",
       "corrective_action": "Registrar cada consentimiento con marca de tiempo, identificador del titular y versión del texto aceptado.",
-      "priority": 2
+      "priority": 2,
+      "evidence_patterns": ["(?:fecha y hora|marca de tiempo|timestamp)", "(?:identificador|identidad|c[oó]digo).*(?:titular|usuario)", "(?:versi[oó]n|texto aceptado|declaraci[oó]n aceptada)"]
     },
     {
       "id": "REV-01",
@@ -131,7 +138,8 @@
       "articles": [5],
       "finding": "No se ofrece un mecanismo para retirar o modificar el consentimiento.",
       "corrective_action": "Habilitar la revocación en línea (enlace de baja y panel de preferencias).",
-      "priority": 3
+      "priority": 3,
+      "evidence_patterns": ["(?:enlace|panel de preferencias|formulario|https?://|[\\w.+-]+@[\\w.-]+\\.[a-z]{2,}|bot[oó]n)"]
     },
     {
       "id": "REV-02",
@@ -156,7 +164,8 @@
       "articles": [5],
       "finding": "No se define un plazo de respuesta para las solicitudes de retiro.",
       "corrective_action": "Definir y publicar un tiempo máximo de respuesta; registrar cada solicitud.",
-      "priority": 3
+      "priority": 3,
+      "evidence_patterns": ["\\b\\d+\\s*(?:horas?|d[ií]as?|mes(?:es)?)\\b"]
     }
   ],
   "injection_patterns": [
