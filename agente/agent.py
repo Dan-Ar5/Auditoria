@@ -186,12 +186,19 @@ class ConsentSupervisorAgent:
         raw_quotes = [q for q in llm.get("evidencia_citada") or [] if isinstance(q, str) and q.strip()]
         grounded = [_ground_quote(q, evidence) for q in raw_quotes]
         quotes = list(dict.fromkeys(q for q in grounded if q))
-        invented_quotes = grounded.count(None)
+        # Las citas no literales se descartan (no se muestran como cita textual). Solo escalan al auditor
+        # cuando el LLM no aportó ninguna cita verificable: los modelos pequeños parafrasean a menudo y
+        # escalar cada paráfrasis llenaría la cola sin aportar control.
+        discarded_quotes = [q for q, g in zip(raw_quotes, grounded) if g is None]
+        if discarded_quotes:
+            result["llm_discarded_quotes"] = discarded_quotes
+        unverifiable = bool(raw_quotes) and not quotes
         retrieved_ids = {f["id"] for f in fragments}
         cited_refs = [str(r).strip(" []()") for r in llm.get("fragmentos_citados") or []]
         invented_refs = [r for r in cited_refs if r and r not in retrieved_ids]
-        if invented_quotes:
-            hitl_reasons.append(f"{domain['name']}: el LLM citó {invented_quotes} texto(s) que no aparecen en la evidencia.")
+        if unverifiable:
+            hitl_reasons.append(f"{domain['name']}: ninguna cita del LLM aparece literalmente en la evidencia "
+                                f"({len(discarded_quotes)} descartada(s)).")
         if invented_refs:
             hitl_reasons.append(f"{domain['name']}: el LLM citó fragmentos no recuperados ({', '.join(invented_refs)}).")
 
@@ -209,6 +216,10 @@ class ConsentSupervisorAgent:
             return result
         if confidence < MIN_LLM_CONFIDENCE:
             hitl_reasons.append(f"{domain['name']}: confianza del LLM baja ({confidence:.2f}).")
+        if not quotes and raw_quotes:
+            # Sin respaldo literal, la redacción del LLM no entra al informe: se conserva la de las reglas.
+            result["source"] = "reglas (LLM sin citas verificables)"
+            return result
         result.update({
             "exigencia": llm.get("exigencia") or result["exigencia"],
             "evidencia_citada": quotes or result["evidencia_citada"],

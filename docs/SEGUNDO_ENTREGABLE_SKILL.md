@@ -68,7 +68,7 @@ El asistente no debe inventar una ejecución ni cambiar el hash, el identificado
 1. Identificar la evidencia y el alcance. Rechazar una entrada vacía y comprobar que el documento pueda leerse.
 2. Ejecutar la revisión. El motor busca posibles excepciones del artículo 14 antes de evaluar los dominios de consentimiento.
 3. Recuperar criterios del corpus y evaluar la información, la obtención y registro, y la modificación y revocación.
-4. Comprobar el resultado. Una etiqueta sin contenido, una contradicción o la falta de contexto no habilitan la emisión automática. Las citas deben corresponder a texto contiguo de la evidencia.
+4. Comprobar el resultado. Una etiqueta sin contenido, una contradicción o la falta de contexto no habilitan la emisión automática. Las citas deben corresponder a texto contiguo de la evidencia; las paráfrasis del LLM se descartan y, si ninguna cita es literal, su redacción no se usa y el caso pasa al auditor.
 5. Conservar el registro y aplicar la revisión humana cuando corresponda. Una excepción candidata se presenta como provisional; los estados pendientes deben permanecer pendientes.
 6. Presentar el informe y un resumen con documento, dictámenes, hallazgos, medidas y estado de revisión.
 
@@ -98,7 +98,7 @@ La validación consta de dos evidencias complementarias. La conversación de Ope
 | Formulario con encabezados vacíos | No Conforme por evidencia insuficiente | Pendiente de revisión |
 | ClubFit, instrucción maliciosa incrustada | No Conforme | Pendiente de revisión |
 
-La suite incluye 39 pruebas aprobadas. Entre las comprobaciones añadidas están los encabezados insuficientes, la falta de contexto, el rechazo de citas alteradas, el bloqueo de emisión de registros pendientes o fabricados, la unicidad de auditorías de una misma organización y la persistencia del ticket junto al registro.
+La suite incluye 41 pruebas aprobadas (39 de esta entrega y 2 sobre el descarte de paráfrasis añadidas en la integración). Entre las comprobaciones añadidas están los encabezados insuficientes, la falta de contexto, el rechazo de citas alteradas, el bloqueo de emisión de registros pendientes o fabricados, la unicidad de auditorías de una misma organización y la persistencia del ticket junto al registro.
 
 Estos casos comprueban comportamientos concretos. No constituyen una estimación de exactitud general ni una validación jurídica independiente. Tampoco se presentan como resultados nuevos de la recuperación híbrida o de Ollama, que no se ejecutaron en esta demostración.
 

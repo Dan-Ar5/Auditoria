@@ -179,8 +179,9 @@ ollama pull llama3
 
 Modelo configurable con `set LLM_MODELO=llama3.1`. Las respuestas del LLM pasan por
 guardas antes de usarse:
-- las citas deben corresponder a texto contiguo de la evidencia; las paráfrasis se retienen para revisión;
-- si cita texto que no está en la evidencia o fragmentos no recuperados, va a revisión humana;
+- las citas deben corresponder a texto contiguo de la evidencia; las paráfrasis se descartan y no se muestran como cita;
+- si ninguna de sus citas es literal, su redacción no entra al informe y el caso va a revisión humana;
+- si cita fragmentos normativos no recuperados, va a revisión humana;
 - si su dictamen contradice al de las reglas, se mantiene el de las reglas (verificable regla por regla),
   se adjunta la opinión del LLM al informe y el informe va a revisión humana.
 
@@ -196,7 +197,7 @@ Un informe queda en `PENDIENTE_REVISION_AUDITOR`, en vez de emitirse, cuando:
 - se aplicó una excepción del Art. 14;
 - se detectan instrucciones maliciosas en la evidencia;
 - el LLM discrepa de las reglas;
-- el LLM inventa citas;
+- el LLM no aporta ninguna cita literal o cita fragmentos no recuperados;
 - la confianza del LLM es baja.
 
 ## Pruebas
