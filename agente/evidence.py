@@ -30,7 +30,8 @@ def find_mentions(text: str, patterns: List[str]) -> Dict[str, List[str]]:
         for pattern in patterns:
             match = re.search(pattern, segment, re.IGNORECASE)
             if match:
-                kind = "negated" if RE_NEGATION.search(segment[:match.start()]) else "affirmative"
+                prefix = re.sub(r"\bno\s+obstante\b", "", segment[:match.start()], flags=re.IGNORECASE)
+                kind = "negated" if RE_NEGATION.search(prefix) else "affirmative"
                 found[kind].append(segment)
                 break
     return found
@@ -65,12 +66,23 @@ class EvidenceAnalyzer:
                 return {**result, "status": INCUMPLE, "quote": mentions["affirmative"][0]}
             return {**result, "status": CUMPLE if mentions["negated"] else NO_DETECTADO,
                     "quote": mentions["negated"][0] if mentions["negated"] else None}
-        # requerido: debe constar de forma afirmativa en la evidencia
-        if mentions["affirmative"]:
-            return {**result, "status": CUMPLE, "quote": mentions["affirmative"][0]}
+        # Una etiqueta no acredita su contenido: cada requisito puede exigir hechos adicionales.
+        supported = [s for s in mentions["affirmative"]
+                     if all(re.search(p, s, re.IGNORECASE) for p in rule.get("evidence_patterns", []))
+                     and not re.search(r"\b(pendiente|por (?:definir|determinar|completar)|desconocid[oa]s?"
+                                       r"|no (?:especificad[oa]|definid[oa]|disponible|identificad[oa])"
+                                       r"|sin (?:especificar|definir|identificar))\b", s, re.IGNORECASE)]
+        if supported and mentions["negated"]:
+            return {**result, "status": INCUMPLE, "quote": mentions["negated"][0],
+                    "requires_review": True, "note": "La evidencia contiene afirmaciones contradictorias."}
+        if supported:
+            return {**result, "status": CUMPLE, "quote": supported[0]}
         if mentions["negated"]:
             return {**result, "status": INCUMPLE, "quote": mentions["negated"][0]}
-        return {**result, "status": NO_EVIDENCIADO, "quote": None}
+        return {**result, "status": NO_EVIDENCIADO,
+                "quote": mentions["affirmative"][0] if mentions["affirmative"] else None,
+                "note": "La mención no aporta información suficiente." if mentions["affirmative"]
+                        else "No se aportó evidencia del requisito."}
 
     def detect_injection(self, evidence: str) -> List[str]:
         return [s for s in segments(evidence)
@@ -92,6 +104,9 @@ class ExceptionCatalog:
         return cls(data.get("exceptions", []), data.get("not_covered_patterns", []), data.get("nota", ""))
 
     def check(self, evidence: str) -> Dict[str, Any]:
+        # El nombre de la organización identifica el caso; no prueba una finalidad exceptuada.
+        evidence = "\n".join(line for line in evidence.splitlines()
+                             if not re.match(r"\s*Empresa\s*:", line, re.IGNORECASE))
         matched = []
         for exception in self.exceptions:
             mentions = find_mentions(evidence, exception.get("patterns", []))

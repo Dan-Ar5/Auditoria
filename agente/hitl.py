@@ -51,6 +51,7 @@ class HITLQueue:
 
     def send_for_review(self, record: Dict[str, Any]) -> str:
         ticket = f"HITL-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{len(self.pending) + 1:03d}"
+        record["hitl_trigger"]["ticket"] = ticket
         self.pending.append({
             "ticket": ticket,
             "record": record,

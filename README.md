@@ -1,5 +1,29 @@
 # AGT-CONSENT-01 — Agente Supervisor de Consentimientos (Auditoría de Sistemas)
 
+## Segundo entregable del TIF
+
+La entrega actual se centra en **un skill funcional especializado en revisión de consentimientos** y en la identidad, instrucciones y conocimiento del asistente. La memoria actual está en [docs/SEGUNDO_ENTREGABLE_SKILL.md](docs/SEGUNDO_ENTREGABLE_SKILL.md). La orquestación e integración del proyecto agéntico corresponden a la tercera unidad.
+
+Para repetir la demostración del segundo entregable:
+
+El modo local funciona con Python 3.10 o superior. En un entorno virtual, las dependencias mínimas para probar también MCP, Excel y la suite son:
+
+```bash
+python -m pip install "mcp>=1.2.0,<2" openpyxl pytest
+```
+
+Después:
+
+```bash
+python validar_skill.py
+```
+
+Audita cinco casos ficticios, conserva cada ejecución en una carpeta nueva y deja pendientes los tickets que requieren auditor. No simula aprobaciones. El corpus y las reglas tienen cobertura parcial; la conformidad se limita a los criterios evaluados.
+
+En OpenCode, seleccionar `consent-supervisor` y solicitar la revisión de una evidencia. El asistente carga `consent-audit`. Con MCP desactivado utiliza la consola; con MCP conectado puede invocar la auditoría completa. El modelo de OpenCode es independiente de Ollama dentro del motor y puede funcionar en línea.
+
+Los Word y PDF anteriores documentan el diseño y resultados históricos del proyecto agéntico. Para el alcance y comportamiento actual de esta entrega, usar la memoria enlazada y los resultados reproducibles de `validar_skill.py`.
+
 Agente de auditoría de privacidad que evalúa evidencias documentales (formularios,
 políticas de privacidad y registros) frente a la **ISO/IEC 27701:2025** y la
 **Ley N.° 29733**. Usa RAG híbrido, un paso **Fail-Fast** sobre las excepciones
@@ -72,7 +96,7 @@ python run_demo.py                 # modo local: sin Docker ni modelos
 python run_demo.py --modo qdrant   # RAG híbrido completo (requiere Qdrant)
 ```
 
-Audita los 4 casos de `evidencias/`:
+Audita los 5 casos de `evidencias/`:
 
 | Caso | Qué demuestra | Resultado esperado |
 |---|---|---|
@@ -80,6 +104,7 @@ Audita los 4 casos de `evidencias/`:
 | `caso_banco.txt` | Fail-Fast: excepción contractual (Art. 14) | Dominios 2 y 3 No Aplica, va al auditor |
 | `caso_conforme.txt` | Un formulario bien diseñado | Conforme, se emite sin revisión |
 | `caso_inyeccion.txt` | Instrucción maliciosa oculta (TIF 4.2.4) | No Conforme, va al auditor |
+| `caso_insuficiente.txt` | Encabezados sin contenido que acredite los requisitos | No Conforme, va al auditor |
 
 Genera en `out/`:
 
@@ -154,6 +179,7 @@ ollama pull llama3
 
 Modelo configurable con `set LLM_MODELO=llama3.1`. Las respuestas del LLM pasan por
 guardas antes de usarse:
+- las citas deben corresponder a texto contiguo de la evidencia; las paráfrasis se retienen para revisión;
 - si cita texto que no está en la evidencia o fragmentos no recuperados, va a revisión humana;
 - si su dictamen contradice al de las reglas, se mantiene el de las reglas (verificable regla por regla),
   se adjunta la opinión del LLM al informe y el informe va a revisión humana.
@@ -165,6 +191,8 @@ opinión y no la última palabra.
 ## Revisión humana (HITL)
 
 Un informe queda en `PENDIENTE_REVISION_AUDITOR`, en vez de emitirse, cuando:
+- falta contexto normativo o hay requisitos sin evidencia suficiente;
+- la evidencia presenta afirmaciones contradictorias;
 - se aplicó una excepción del Art. 14;
 - se detectan instrucciones maliciosas en la evidencia;
 - el LLM discrepa de las reglas;

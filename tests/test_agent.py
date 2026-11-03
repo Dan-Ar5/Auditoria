@@ -150,15 +150,19 @@ def test_llm_agreement_uses_llm_narrative(make_agent):
     record = make_agent(reasoner).audit_evidence(read_case("caso_tiendaandina.txt"), "caso_tiendaandina.txt")
     domain = record["domains"][1]
     assert domain["source"] == "llm+reglas" and domain["hallazgo"] == "Hallazgo del LLM"
-    assert record["review_status"] == "EMITIDO"
+    assert record["review_status"] == "PENDIENTE_REVISION_AUDITOR"
+    assert "faltan datos o evidencias suficientes" in record["hitl_trigger"]["reason"]
 
 
-def test_paraphrased_quote_is_grounded_to_literal_text():
+def test_only_literal_quotes_are_grounded():
     from agente.agent import _confidence, _ground_quote
 
     evidence = read_case("caso_conforme.txt")
-    literal = _ground_quote("El sitio web ofrece un panel de preferencias para retirar el consentimiento en línea "
-                            "y cada boletín incluye un enlace 'Darse de baja'.", evidence)
+    paraphrase = "El sitio web ofrece un panel de preferencias para retirar el consentimiento en línea " \
+                 "y cada boletín incluye un enlace 'Darse de baja'."
+    assert _ground_quote(paraphrase, evidence) is None
+    literal = _ground_quote('Cada boletín incluye un enlace "Darse de baja" y el sitio web ofrece un panel '
+                            'de preferencias para retirar el consentimiento en línea.', evidence)
     assert literal and literal.startswith("Cada boletín incluye un enlace")
     assert _ground_quote("No hay opción de no suscribirse al servicio de mensajería", evidence) is None
     assert _confidence(100) == 1.0 and _confidence("0.8") == 0.8 and _confidence(None) == 0.0
@@ -213,7 +217,7 @@ def test_mcp_tools_respond(make_agent):
     assert backend.mcp_tool_retrieve_norms("revocar consentimiento", filters={"control": ["A.1.3.5"]}).ok
     assert backend.mcp_tool_check_exceptions("lavado de activos").data["applies"] is True
     assert backend.mcp_tool_analyze_evidence("Casilla premarcada").ok
-    assert backend.mcp_tool_emit_audit_report({"audit_id": "X"}).ok
+    assert not backend.mcp_tool_emit_audit_report({"audit_id": "X"}).ok
 
 
 def test_create_server_registers_tools():

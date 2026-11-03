@@ -5,6 +5,7 @@ import re
 import unicodedata
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 from .backends import ConsentMCPBackend
 from .evidence import INCUMPLE, NO_EVIDENCIADO, segments
@@ -12,10 +13,8 @@ from .hitl import HITLQueue
 from .models import (AGENT_ID, CONFORME, DICTAMENES, DOMAINS, ESTADO_EMITIDO, ESTADO_PENDIENTE,
                      EXCEPTIONS_DOMAIN, NO_APLICA, NO_CONFORME, NORMA_ISO, NORMA_LEY, NORMA_REGLAMENTO)
 from .reasoner import OllamaReasoner
-from .retrieval import _tokens
 
 MIN_LLM_CONFIDENCE = 0.5   # la autoevaluación de modelos pequeños es poco fiable: solo alerta si es muy baja
-QUOTE_OVERLAP = 0.85       # proporción de palabras de la cita que deben estar en la evidencia
 MIN_QUOTE_WORDS = 3        # una "cita" de una o dos palabras no prueba nada
 CONSENT_DOMAINS = ("obtencion", "revocacion")
 
@@ -27,22 +26,11 @@ def _normalize(text: str) -> str:
 
 
 def _ground_quote(quote: str, evidence: str) -> Optional[str]:
-    """Devuelve la oración ORIGINAL de la evidencia que respalda una cita del LLM, o None si es inventada.
-
-    Los modelos pequeños parafrasean levemente; se acepta la cita si casi todas sus palabras
-    están en la evidencia, y se reemplaza por el texto literal de la evidencia.
-    """
-    words = set(_tokens(quote))
-    if len(words) < MIN_QUOTE_WORDS:
+    """Acepta citas contiguas; normaliza espacios y comillas, conservando palabras y negaciones."""
+    if len(re.findall(r"\w+", quote)) < MIN_QUOTE_WORDS:
         return None
-    if _normalize(quote) in _normalize(evidence):
-        exact = True
-    else:
-        exact = len(words & set(_tokens(evidence))) / len(words) >= QUOTE_OVERLAP
-    if not exact:
-        return None
-    best = max(segments(evidence), key=lambda s: len(words & set(_tokens(s))), default=None)
-    return best
+    needle = _normalize(quote)
+    return next((s for s in segments(evidence) if needle in _normalize(s)), None)
 
 
 def _confidence(value: Any) -> float:
@@ -71,9 +59,13 @@ class ConsentSupervisorAgent:
     # ------------------------------------------------------------------ flujo principal
     def audit_evidence(self, evidence_text: str, evidence_name: str = "evidencia.txt") -> Dict[str, Any]:
         evidence_text = evidence_text.strip()
+        if not evidence_text:
+            raise ValueError("La evidencia está vacía; no se puede generar un dictamen.")
         analysis = self.mcp.mcp_tool_analyze_evidence(evidence_text).data
         findings = analysis["findings"]
         hitl_reasons: List[str] = []
+        if any(f.get("requires_review") for f in findings):
+            hitl_reasons.append("La evidencia contiene afirmaciones contradictorias; debe revisarla el auditor.")
         if analysis["injection_suspects"]:
             hitl_reasons.append("Posible inyección de instrucciones en la evidencia: "
                                 f"«{analysis['injection_suspects'][0]}».")
@@ -97,7 +89,10 @@ class ConsentSupervisorAgent:
         if record["hitl_trigger"]["requires_auditor_signoff"]:
             record["hitl_trigger"]["ticket"] = self.hitl_queue.send_for_review(record)
         else:
-            self.mcp.mcp_tool_emit_audit_report(record)
+            self.mcp._stage_generated_report(record)
+            emitted = self.mcp.mcp_tool_emit_audit_report(record)
+            if not emitted.ok:
+                raise RuntimeError(emitted.error)
         return record
 
     # ------------------------------------------------------------------ Fail-Fast
@@ -107,6 +102,9 @@ class ConsentSupervisorAgent:
         result = {"exception_applies": rules["applies"], "justification": rules["justification"],
                   "matched": rules["matched"], "source": "reglas",
                   "fragments": [f["id"] for f in fragments], "fragment_details": fragments}
+        if not fragments:
+            result["exception_applies"] = False
+            hitl_reasons.append("No se recuperó fundamento para verificar las excepciones del Art. 14.")
 
         llm = self.reasoner.check_exception(evidence, fragments) if fragments else None
         if llm is not None:
@@ -151,6 +149,11 @@ class ConsentSupervisorAgent:
     def _evaluate_domain(self, key: str, domain: Dict[str, Any], evidence: str,
                          findings: List[Dict[str, Any]], hitl_reasons: List[str]) -> Dict[str, Any]:
         fragments = self._retrieve_domain_context(key, domain, evidence)
+        recovered_norms = {f["norma"] for f in fragments}
+        if not {NORMA_ISO, NORMA_LEY} <= recovered_norms:
+            hitl_reasons.append(f"{domain['name']}: contexto normativo insuficiente para emitir el informe.")
+        if any(f["status"] == NO_EVIDENCIADO for f in findings):
+            hitl_reasons.append(f"{domain['name']}: faltan datos o evidencias suficientes; requiere revisión del auditor.")
         failing = [f for f in findings if f["status"] in (INCUMPLE, NO_EVIDENCIADO)]
         rules_dictamen = NO_CONFORME if failing else CONFORME
 
@@ -312,4 +315,4 @@ class ConsentSupervisorAgent:
     def _audit_id(organization: str) -> str:
         text = unicodedata.normalize("NFKD", organization)
         slug = re.sub(r"[^A-Za-z0-9]", "", text)[:6].upper() or "CASO"
-        return f"CON-{datetime.now(timezone.utc).strftime('%Y')}-{slug}"
+        return f"CON-{datetime.now(timezone.utc).strftime('%Y')}-{slug}-{uuid4().hex[:12].upper()}"
