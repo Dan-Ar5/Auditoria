@@ -80,6 +80,18 @@ Auditoria/
 └── requirements.txt
 ```
 
+## Documentos del proyecto (`docs/`)
+
+| Documento | Uso |
+|---|---|
+| `Informe_Arquitectura_AGT-CONSENT-01.pdf` | Informe de arquitectura (contexto, capas, componentes, secuencia, datos, interfaces, despliegue, panel y decisiones) |
+| `TIF_Agente_Supervisor_Consentimientos_v2.pdf` | TIF del segundo entregable |
+| `TIF_Agente_Supervisor_Consentimientos_v3.pdf` | TIF con la arquitectura ampliada (alternativa en un solo documento) |
+| `Presentacion_AGT-CONSENT-01.pdf` | Diapositivas de la exposición (Daniel 1–6, Jhastyn 7–13, Daniela 14–20) |
+| `Guion_Exposicion.pdf` | Qué dice cada expositor en cada diapositiva |
+| `Flujo_Agente_Consentimientos.png` | Imagen del flujo del agente |
+| `arquitectura/`, `capturas/` | Diagramas sueltos, capturas del panel y PDF de ejemplo del informe |
+
 ## Instalación
 
 ```bash
