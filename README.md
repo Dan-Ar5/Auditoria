@@ -69,8 +69,11 @@ Auditoria/
 │   └── excepciones_art14.json  # Catálogo de excepciones para el Fail-Fast
 ├── evidencias/            # Casos a auditar (.txt)
 ├── .opencode/             # Agente (consent-supervisor) y skill (consent-audit) para opencode
-├── tests/test_agent.py
+├── panel/index.html       # Página del panel web (sin dependencias externas)
+├── tests/                 # test_agent, test_safety_regressions, test_dashboard
+├── dashboard.py           # Panel web local: proceso en vivo, resultado y cola del auditor
 ├── mcp_server.py          # MCP Server real (stdio) con las herramientas
+├── validar_skill.py       # Validación reproducible de los 5 casos
 ├── run_demo.py            # Demo end-to-end (todas las evidencias)
 ├── rag_auditor.py         # Auditoría de una evidencia por consola
 ├── docs/                  # Historial de fases 0-1 y migración de Qdrant
@@ -88,6 +91,22 @@ pip install -r requirements.txt
 El núcleo (`agente/` en modo `local`) solo usa la librería estándar. Las
 dependencias se necesitan para el modo `qdrant`, la lectura de PDF, el MCP
 Server, Excel y las pruebas.
+
+## Panel web (demostración visual)
+
+```bash
+python dashboard.py                 # abre http://127.0.0.1:8765 en el navegador
+python dashboard.py --modo qdrant   # con la búsqueda híbrida completa
+python dashboard.py --sin-llm       # sin Ollama: más rápido, dictamen de las reglas
+```
+
+En el navegador se elige un caso de `evidencias/` (o se pega un texto) y se pulsa **Auditar**:
+
+1. **Proceso en vivo:** los 7 pasos (evidencia, Fail-Fast, búsqueda, reglas, Llama 3, guardas y decisión) se encienden a medida que el agente trabaja, con un registro de eventos por dominio.
+2. **Resultado:** dictamen por dominio con la cita textual, la norma usada, los fragmentos recuperados y las medidas correctivas; el informe se descarga en Markdown.
+3. **Cola del auditor:** los informes pendientes se aprueban o rechazan desde el panel, con una nota.
+
+Con Llama 3 cada caso tarda unos 2 minutos; con `--sin-llm`, segundos. El panel solo escucha en `127.0.0.1` y guarda sus resultados en `out/panel/` (cada inicio limpia la cola; `--conservar` la mantiene).
 
 ## Ejecución de la demo
 

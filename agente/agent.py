@@ -4,7 +4,7 @@ import hashlib
 import re
 import unicodedata
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from uuid import uuid4
 
 from .backends import ConsentMCPBackend
@@ -55,12 +55,27 @@ class ConsentSupervisorAgent:
         self.hitl_queue = hitl_queue
         self.reasoner = reasoner or OllamaReasoner()
         self.fragments_per_domain = fragments_per_domain
+        self._on_event: Optional[Callable[[Dict[str, Any]], None]] = None
+
+    def _emit(self, step: str, status: str, detail: str, domain: Optional[str] = None, **data: Any) -> None:
+        """Aviso de progreso opcional (lo usa el panel web); no altera el resultado de la auditoría."""
+        if self._on_event:
+            self._on_event({"paso": step, "estado": status, "detalle": detail, "dominio": domain, "datos": data})
 
     # ------------------------------------------------------------------ flujo principal
-    def audit_evidence(self, evidence_text: str, evidence_name: str = "evidencia.txt") -> Dict[str, Any]:
+    def audit_evidence(self, evidence_text: str, evidence_name: str = "evidencia.txt",
+                       on_event: Optional[Callable[[Dict[str, Any]], None]] = None) -> Dict[str, Any]:
+        self._on_event = on_event
+        try:
+            return self._audit(evidence_text, evidence_name)
+        finally:
+            self._on_event = None
+
+    def _audit(self, evidence_text: str, evidence_name: str) -> Dict[str, Any]:
         evidence_text = evidence_text.strip()
         if not evidence_text:
             raise ValueError("La evidencia está vacía; no se puede generar un dictamen.")
+        self._emit("entrada", "ok", f"Evidencia recibida: {evidence_name} ({len(evidence_text)} caracteres).")
         analysis = self.mcp.mcp_tool_analyze_evidence(evidence_text).data
         findings = analysis["findings"]
         hitl_reasons: List[str] = []
@@ -69,6 +84,7 @@ class ConsentSupervisorAgent:
         if analysis["injection_suspects"]:
             hitl_reasons.append("Posible inyección de instrucciones en la evidencia: "
                                 f"«{analysis['injection_suspects'][0]}».")
+            self._emit("entrada", "alerta", f"Posible instrucción maliciosa: «{analysis['injection_suspects'][0]}»")
 
         # Paso 1 (Fail-Fast): excepciones del Art. 14 antes de cualquier control de consentimiento.
         fail_fast = self._fail_fast(evidence_text, hitl_reasons)
@@ -79,24 +95,44 @@ class ConsentSupervisorAgent:
             # La excepción exime del consentimiento (obtenerlo y retirarlo), no del deber de información.
             if key in CONSENT_DOMAINS and fail_fast["exception_applies"]:
                 domains.append(self._not_applicable_domain(domain, fail_fast))
+                self._emit("dictamen", "omitido", "No Aplica: excepción del Art. 14.", domain["name"],
+                           dictamen=NO_APLICA)
                 continue
             domain_findings = [f for f in findings if f["domain"] == key]
-            domains.append(self._evaluate_domain(key, domain, evidence_text, domain_findings, hitl_reasons))
+            result = self._evaluate_domain(key, domain, evidence_text, domain_findings, hitl_reasons)
+            domains.append(result)
+            detail = (f"{result['dictamen']}: se mantiene el dictamen de las reglas; la IA opinó "
+                      f"«{result['llm_opinion']['dictamen']}»." if result.get("llm_opinion")
+                      else f"{result['dictamen']} (fuente: {result['source']}).")
+            self._emit("dictamen", "ok" if result["dictamen"] == CONFORME else "alerta", detail, domain["name"],
+                       dictamen=result["dictamen"])
         domains.append(self._exceptions_row(fail_fast))
 
         record = self._build_record(evidence_text, evidence_name, fail_fast, domains, findings,
                                     analysis["injection_suspects"], hitl_reasons)
         if record["hitl_trigger"]["requires_auditor_signoff"]:
             record["hitl_trigger"]["ticket"] = self.hitl_queue.send_for_review(record)
+            self._emit("decision", "alerta", "Informe retenido para el auditor: "
+                       f"{len(hitl_reasons)} motivo(s).", ticket=record["hitl_trigger"]["ticket"],
+                       motivos=hitl_reasons)
         else:
             self.mcp._stage_generated_report(record)
             emitted = self.mcp.mcp_tool_emit_audit_report(record)
             if not emitted.ok:
                 raise RuntimeError(emitted.error)
+            self._emit("decision", "ok", "Sin observaciones: informe emitido a la bitácora de gobernanza.")
         return record
 
     # ------------------------------------------------------------------ Fail-Fast
     def _fail_fast(self, evidence: str, hitl_reasons: List[str]) -> Dict[str, Any]:
+        self._emit("failfast", "inicio", "Contrastando la evidencia con las excepciones del Art. 14…")
+        result = self._fail_fast_inner(evidence, hitl_reasons)
+        self._emit("failfast", "alerta" if result["exception_applies"] else "ok",
+                   ("Aplica una excepción: " if result["exception_applies"] else "No aplica excepción. ")
+                   + result["justification"], fragmentos=result["fragments"], fuente=result["source"])
+        return result
+
+    def _fail_fast_inner(self, evidence: str, hitl_reasons: List[str]) -> Dict[str, Any]:
         rules = self.mcp.mcp_tool_check_exceptions(evidence).data
         fragments = rules["fragments"]
         result = {"exception_applies": rules["applies"], "justification": rules["justification"],
@@ -148,7 +184,13 @@ class ConsentSupervisorAgent:
 
     def _evaluate_domain(self, key: str, domain: Dict[str, Any], evidence: str,
                          findings: List[Dict[str, Any]], hitl_reasons: List[str]) -> Dict[str, Any]:
+        name = domain["name"]
+        self._emit("busqueda", "inicio", "Buscando artículos y controles aplicables…", name)
         fragments = self._retrieve_domain_context(key, domain, evidence)
+        self._emit("busqueda", "ok" if fragments else "alerta",
+                   f"{len(fragments)} fragmento(s) recuperado(s): " + (", ".join(f["id"] for f in fragments) or "ninguno"),
+                   name, fragmentos=[{"id": f["id"], "norma": f["norma"], "control": f.get("control"),
+                                      "articulo": f.get("articulo"), "score": f.get("score")} for f in fragments])
         recovered_norms = {f["norma"] for f in fragments}
         if not {NORMA_ISO, NORMA_LEY} <= recovered_norms:
             hitl_reasons.append(f"{domain['name']}: contexto normativo insuficiente para emitir el informe.")
@@ -156,6 +198,11 @@ class ConsentSupervisorAgent:
             hitl_reasons.append(f"{domain['name']}: faltan datos o evidencias suficientes; requiere revisión del auditor.")
         failing = [f for f in findings if f["status"] in (INCUMPLE, NO_EVIDENCIADO)]
         rules_dictamen = NO_CONFORME if failing else CONFORME
+        self._emit("reglas", "alerta" if failing else "ok",
+                   (f"{len(failing)} brecha(s): " + " ".join(f["finding"] for f in failing)) if failing
+                   else f"Se cumplen las {len(findings)} reglas del dominio.", name,
+                   reglas=[{"id": f["id"], "descripcion": f["description"], "estado": f["status"],
+                            "cita": f.get("quote")} for f in findings])
 
         result = {
             "domain": domain["name"],
@@ -175,9 +222,25 @@ class ConsentSupervisorAgent:
             "confidence": 0.9 if not any(f["status"] == NO_EVIDENCIADO for f in findings) else 0.7,
         }
 
+        if fragments and self.reasoner.is_available():
+            self._emit("llm", "inicio", f"{self.reasoner.model} razonando: exigencia → cita → brecha → veredicto…", name)
         llm = self.reasoner.evaluate_domain(domain["name"], evidence, fragments, findings) if fragments else None
         if llm is None:
+            self._emit("llm", "omitido", "IA no disponible: se usa el dictamen determinista de las reglas.", name)
+            self._emit("guardas", "omitido", "Sin respuesta de la IA que verificar.", name)
             return result
+        self._emit("llm", "ok", f"La IA opina: {llm.get('dictamen')}.", name, brecha=llm.get("brecha"))
+        before = len(hitl_reasons)
+        result = self._apply_guards(name, llm, result, rules_dictamen, evidence, fragments, hitl_reasons)
+        notes = hitl_reasons[before:]
+        self._emit("guardas", "alerta" if notes or result.get("llm_discarded_quotes") else "ok",
+                   ("; ".join(n[len(name) + 2:] for n in notes) if notes else "Citas y fragmentos verificados."),
+                   name, descartadas=result.get("llm_discarded_quotes", []))
+        return result
+
+    def _apply_guards(self, name: str, llm: Dict[str, Any], result: Dict[str, Any], rules_dictamen: str,
+                      evidence: str, fragments: List[Dict[str, Any]], hitl_reasons: List[str]) -> Dict[str, Any]:
+        domain = {"name": name}
         result.update({"source": "llm+reglas", "llm_reasoning": {k: llm.get(k) for k in ("exigencia", "brecha")}})
         llm_dictamen = llm.get("dictamen")
         confidence = _confidence(llm.get("confianza"))
