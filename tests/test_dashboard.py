@@ -67,12 +67,27 @@ def test_panel_streams_audit_and_handles_auditor_decision(panel):
     assert lines[0]["tipo"] == "evento" and lines[-1]["tipo"] == "resultado"
     record = lines[-1]["registro"]
     assert record["review_status"] == "PENDIENTE_REVISION_AUDITOR"
-    report = urllib.request.urlopen(f"{panel}/api/informe?id={record['audit_id']}", timeout=10).read().decode("utf-8")
-    assert "Informe de auditoría" in report
+    with urllib.request.urlopen(f"{panel}/api/informe?descargar=1&id={record['audit_id']}", timeout=90) as res:
+        report = res.read()
+        if res.headers.get_content_type() == "application/pdf":  # con Edge o Chrome instalados
+            assert report.startswith(b"%PDF") and "attachment" in res.headers["Content-Disposition"]
+        else:  # sin navegador: página lista para «Guardar como PDF»
+            assert "Informe de auditoría" in report.decode("utf-8")
     pending = json.load(urllib.request.urlopen(panel + "/api/pendientes", timeout=10))
     decision = json.load(post(panel + "/api/decidir", {"ticket": pending[0]["ticket"], "accion": "aprobar",
                                                        "nota": "Excepción verificada"}))
     assert decision["ok"] and decision["aprobados"] == 1 and decision["pendientes"] == []
+
+
+def test_report_html_has_all_sections_and_escapes_evidence(agent):
+    from agente import render_html
+
+    record = agent.audit_evidence(read_case("caso_inyeccion.txt") + "\n<script>alert(1)</script>", "x.txt")
+    page = render_html(record)
+    for section in ("Resumen del dictamen", "Detalle por dominio", "Medidas correctivas priorizadas",
+                    "Revisión humana", "Trazabilidad normativa", "Evidencia auditada"):
+        assert section in page
+    assert "<script>alert(1)</script>" not in page and "&lt;script&gt;" in page
 
 
 def test_panel_rejects_empty_evidence(panel):

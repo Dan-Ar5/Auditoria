@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -21,7 +22,7 @@ from pathlib import Path
 from typing import Any, Dict
 from urllib.parse import parse_qs, urlparse
 
-from agente import OllamaReasoner, build_agent, render_markdown
+from agente import OllamaReasoner, build_agent, export_pdf, render_html
 
 BASE_DIR = Path(__file__).resolve().parent
 EVIDENCE_DIR = BASE_DIR / "evidencias"
@@ -74,18 +75,13 @@ class PanelHandler(BaseHTTPRequestHandler):
         elif url.path == "/api/pendientes":
             self._json(self._pending())
         elif url.path == "/api/informe":
-            audit_id = parse_qs(url.query).get("id", [""])[0]
+            query = parse_qs(url.query)
+            audit_id = query.get("id", [""])[0]
             record = STATE["records"].get(audit_id)
             if not record:
                 self._json({"error": "Informe no encontrado en esta sesión."}, 404)
                 return
-            body = render_markdown(record).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "text/markdown; charset=utf-8")
-            self.send_header("Content-Disposition", f'attachment; filename="informe_{audit_id}.md"')
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            self._report(record, download=query.get("descargar", ["0"])[0] == "1")
         else:
             self._json({"error": "Ruta no encontrada."}, 404)
 
@@ -138,6 +134,27 @@ class PanelHandler(BaseHTTPRequestHandler):
         finally:
             STATE["lock"].release()
             self.close_connection = True
+
+    # ------------------------------------------------------------------ informe PDF
+    def _report(self, record: Dict[str, Any], download: bool) -> None:
+        """Entrega el informe en PDF; si no hay Edge/Chrome, una página lista para «Guardar como PDF»."""
+        name = f"informe_{record['audit_id']}.pdf"
+        # El PDF refleja el estado actual del informe (por ejemplo, tras la decisión del auditor).
+        target = OUT_DIR / "informes" / f"{record['audit_id']}_{record['review_status']}.pdf"
+        try:
+            if not target.exists():
+                export_pdf(record, target)
+            body, ctype = target.read_bytes(), "application/pdf"
+            disposition = f'{"attachment" if download else "inline"}; filename="{name}"'
+        except (RuntimeError, OSError, subprocess.SubprocessError):
+            body, ctype = render_html(record, print_button=True).encode("utf-8"), "text/html; charset=utf-8"
+            disposition = "inline"
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Disposition", disposition)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     # ------------------------------------------------------------------ cola del auditor
     @staticmethod

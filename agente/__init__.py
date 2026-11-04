@@ -5,6 +5,7 @@ from .evidence import EvidenceAnalyzer, ExceptionCatalog
 from .exporters import (build_evidence_matrix, export_csv, export_json, export_markdown, export_xlsx,
                         render_markdown)
 from .hitl import GovernanceLog, HITLQueue
+from .report_pdf import export_pdf, render_html
 from .models import AGENT_ID, CONTROLS, DICTAMENES, DOMAINS, MCPResponse
 from .reasoner import OllamaReasoner
 from .retrieval import LocalBM25Retriever, QdrantHybridRetriever, build_retriever
@@ -34,6 +35,8 @@ __all__ = [
     "export_xlsx",
     "export_markdown",
     "render_markdown",
+    "render_html",
+    "export_pdf",
     "build_evidence_matrix",
     "build_agent",
     "build_corpus",

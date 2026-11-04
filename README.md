@@ -103,7 +103,7 @@ python dashboard.py --sin-llm       # sin Ollama: más rápido, dictamen de las 
 En el navegador se elige un caso de `evidencias/` (o se pega un texto) y se pulsa **Auditar**:
 
 1. **Proceso en vivo:** los 7 pasos (evidencia, Fail-Fast, búsqueda, reglas, Llama 3, guardas y decisión) se encienden a medida que el agente trabaja, con un registro de eventos por dominio.
-2. **Resultado:** dictamen por dominio con la cita textual, la norma usada, los fragmentos recuperados y las medidas correctivas; el informe se descarga en Markdown.
+2. **Resultado:** dictamen por dominio con la cita textual, la norma usada y las medidas correctivas; el informe se ve o descarga en **PDF** (lo genera Edge o Chrome sin abrir ventanas; si no hay navegador, se abre una página lista para «Guardar como PDF»).
 3. **Cola del auditor:** los informes pendientes se aprueban o rechazan desde el panel, con una nota.
 
 Con Llama 3 cada caso tarda unos 2 minutos; con `--sin-llm`, segundos. El panel solo escucha en `127.0.0.1` y guarda sus resultados en `out/panel/` (cada inicio limpia la cola; `--conservar` la mantiene).
