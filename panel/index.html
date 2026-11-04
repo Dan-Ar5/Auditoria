@@ -86,7 +86,16 @@
   .ticket { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
   .ticket:last-child { border-bottom: 0; }
   .ticket .who b { color: var(--ink); }
-  .ticket .who .reasons { margin-top: 5px; }
+  .ticket { align-items: start; }
+  .thead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .meta { font-size: 12.5px; color: var(--muted); }
+  .doms-line { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .checks { list-style: none; margin: 8px 0 6px; padding: 0; display: grid; gap: 5px; }
+  .checks li { font-size: 13.5px; color: var(--text); }
+  .checks .pill { font-size: 12px; margin-right: 2px; }
+  .ticket a.link { font-size: 13px; text-decoration: none; }
+  .help { margin: -6px 0 6px; font-size: 13px; color: var(--muted); }
+  .ticket .act { padding-top: 2px; }
   .ticket .act { display: flex; gap: 8px; align-items: center; }
   .ticket input { width: 220px; padding: 7px 10px; font-size: 13px; }
   @media (max-width: 760px) { .ticket { grid-template-columns: 1fr; } .ticket input { width: 100%; } }
@@ -275,15 +284,46 @@ function renderResult(r) {
   $("#resultado").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+// "Se informan los destinatarios de los datos" -> "los destinatarios de los datos"
+const missing = (t) => t.replace(/^(Se (informan?|declara|identifica|registra|define)|Existe)\s+/i, "").replace(/^al\s/, "el ");
+const pretty = (v) => v === "No Conforme" ? "No conforme" : (v === "No Aplica" ? "No aplica" : v);
+
+// Una frase por motivo: qué debe verificar el auditor antes de decidir.
+function checks(it) {
+  const out = [];
+  if (it.excepcion) out.push(["Excepción legal", "Confirma que los datos se usan solo para el fin exceptuado (" +
+    firstSentence(it.excepcion.replace(/^Art\. 14 \([^)]*\):\s*/, "")).replace(/\.$/, "").toLowerCase() + "). Si es así, el «No aplica» es correcto."]);
+  if (it.manipulacion && it.manipulacion.length) out.push(["Posible manipulación", "El documento contiene una instrucción dirigida al sistema. Revisa el original antes de aprobar."]);
+  if (it.faltantes && it.faltantes.length) {
+    const list = it.faltantes.slice(0, 3).map(missing).join(", ") + (it.faltantes.length > 3 ? ` y ${it.faltantes.length - 3} más` : "");
+    out.push(["Faltan datos", `No consta: ${list}. Si la empresa no lo acredita, el «No conforme» es correcto.`]);
+  }
+  if (it.ia_discrepa && it.ia_discrepa.length) out.push(["La IA discrepa", `La IA opinó distinto en ${it.ia_discrepa.map((d) => SHORT[d]).join(" y ")}. Decide si su observación tiene sustento en la evidencia.`]);
+  if (/contradictori/i.test(it.motivo)) out.push(["Contradicción", "La evidencia se contradice sobre un mismo requisito. Pide aclaración a la empresa."]);
+  if (/contexto normativo/i.test(it.motivo)) out.push(["Falta contexto normativo", "No se recuperaron normas suficientes; verifica el requisito manualmente."]);
+  if (/ninguna cita/i.test(it.motivo)) out.push(["Citas no verificables", "La IA citó texto que no está en el documento; se descartó y se usó el resultado de las reglas."]);
+  return out;
+}
+
 async function cargarCola(items) {
   if (!items) items = await (await fetch("/api/pendientes")).json();
   const cola = $("#cola"); cola.textContent = "";
   if (!items.length) { cola.append(el("div", "idle", "No hay informes pendientes.")); return; }
+  cola.append(el("p", "help", "Aprobar: confirmas el dictamen y pasa al registro final. Rechazar: lo devuelves para corregir o pedir más evidencia."));
   for (const it of items) {
     const row = el("div", "ticket"); const who = el("div", "who");
-    who.append(el("b", null, it.organizacion.replace(/\s*\(.*\)\s*$/, "")), document.createTextNode("  "),
-               el("span", "pill " + (it.resultado === "CONFORME" ? "ok" : "bad"), it.resultado === "CONFORME" ? "Conforme" : "No conforme"),
-               reasonTags(it.motivo));
+    const hora = new Date(it.creado).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+    const head = el("div", "thead");
+    head.append(el("b", null, it.organizacion.replace(/\s*\(.*\)\s*$/, "")),
+                el("span", "pill " + (it.resultado === "CONFORME" ? "ok" : "bad"), it.resultado === "CONFORME" ? "Conforme" : "No conforme"),
+                el("span", "meta", `${hora} · #${it.audit_id.slice(-4)}`));
+    who.append(head);
+    who.append(el("div", "doms-line", (it.dominios || []).map((d) => `${SHORT[d.dominio]}: ${pretty(d.dictamen)}`).join(" · ")));
+    const list = el("ul", "checks");
+    for (const [tag, text] of checks(it)) { const li = el("li"); li.append(el("span", "pill hum", tag), document.createTextNode(" " + text)); list.append(li); }
+    who.append(list);
+    const link = el("a", "link", "Ver informe"); link.href = "/api/informe?id=" + encodeURIComponent(it.audit_id);
+    who.append(link);
     const act = el("div", "act"); const note = el("input"); note.placeholder = "Nota (opcional)";
     const yes = el("button", "yes", "Aprobar"), no = el("button", "no", "Rechazar");
     yes.onclick = () => decidir(it.ticket, "aprobar", note.value); no.onclick = () => decidir(it.ticket, "rechazar", note.value);

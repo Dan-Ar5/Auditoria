@@ -142,14 +142,27 @@ class PanelHandler(BaseHTTPRequestHandler):
     # ------------------------------------------------------------------ cola del auditor
     @staticmethod
     def _pending():
-        return [{
-            "ticket": item["ticket"],
-            "audit_id": item["record"]["audit_id"],
-            "organizacion": item["record"]["subject"]["organization"],
-            "resultado": item["record"]["overall_status"],
-            "motivo": item["record"]["hitl_trigger"]["reason"],
-            "creado": item["created_at"],
-        } for item in STATE["agent"].hitl_queue.list_pending()]
+        items = []
+        for item in STATE["agent"].hitl_queue.list_pending():
+            record = item["record"]
+            domains = [d for d in record["domains"] if d.get("controls")]
+            STATE["records"].setdefault(record["audit_id"], record)  # permite abrir el informe desde la cola
+            items.append({
+                "ticket": item["ticket"],
+                "audit_id": record["audit_id"],
+                "organizacion": record["subject"]["organization"],
+                "resultado": record["overall_status"],
+                "motivo": record["hitl_trigger"]["reason"],
+                "creado": item["created_at"],
+                # Lo mínimo para que el auditor sepa qué verificar antes de decidir.
+                "dominios": [{"dominio": d["domain"], "dictamen": d["dictamen"]} for d in domains],
+                "faltantes": list(dict.fromkeys(f["description"] for d in domains for f in d.get("rule_findings", [])
+                                                if f["status"] == "no_evidenciado")),
+                "excepcion": record["fail_fast"]["justification"] if record["fail_fast"]["exception_applies"] else None,
+                "ia_discrepa": [d["domain"] for d in domains if d.get("llm_opinion")],
+                "manipulacion": record.get("injection_suspects", [])[:1],
+            })
+        return items
 
     def _decide(self, data: Dict[str, Any]) -> None:
         hitl = STATE["agent"].hitl_queue
