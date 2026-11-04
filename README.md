@@ -87,8 +87,7 @@ Auditoria/
 | `Informe_Arquitectura_AGT-CONSENT-01.pdf` | Informe de arquitectura (contexto, capas, componentes, secuencia, datos, interfaces, despliegue, panel y decisiones) |
 | `TIF_Agente_Supervisor_Consentimientos_v2.pdf` | TIF del segundo entregable |
 | `TIF_Agente_Supervisor_Consentimientos_v3.pdf` | TIF con la arquitectura ampliada (alternativa en un solo documento) |
-| `Presentacion_AGT-CONSENT-01.pdf` | Diapositivas de la exposición (Daniel 1–6, Jhastyn 7–13, Daniela 14–20) |
-| `Guion_Exposicion.pdf` | Qué dice cada expositor en cada diapositiva |
+| `Presentacion_AGT-CONSENT-01.pdf` | Diapositivas de la exposición (Daniela 1–7, Jhastyn 8–14, Daniel 15–21) |
 | `Flujo_Agente_Consentimientos.png` | Imagen del flujo del agente |
 | `arquitectura/`, `capturas/` | Diagramas sueltos, capturas del panel y PDF de ejemplo del informe |
 
